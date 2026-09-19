@@ -8,6 +8,8 @@ import Verify from './pages/Verify'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import SetNewPassword from './pages/SetNewPassword'
+import ProductCustomization from './pages/ProductCustomization'
+import Cart from './pages/Cart'
 
 function App() {
   return (
@@ -21,6 +23,8 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/set-new-password" element={<SetNewPassword />} />
+      <Route path="/product/:productId" element={<ProductCustomization />} />
+      <Route path="/cart" element={<Cart />} />
     </Routes>
   )
 }

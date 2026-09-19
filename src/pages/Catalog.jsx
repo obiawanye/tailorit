@@ -1,59 +1,54 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useUser } from '@clerk/react'
-import {
-  FiSearch,
-  FiShoppingCart,
-  FiChevronDown,
-  FiX,
-} from 'react-icons/fi'
+import {FiSearch, FiShoppingCart, FiChevronDown, FiX} from 'react-icons/fi'
 
 
 const products = [
   {
     id: 1,
-    name: 'EASY CARE TEXTURED SHIRT',
+    name: 'CUSTOM ART LAPTOP SLEEVE',
     price: 800,
     originalPrice: 1100,
     category: 'laptops',
     type: 'customized',
-    image: '/assets/Landing/laptop.png',
+    image: '/assets/Catalog/catalog-laptop.png',
   },
   {
     id: 2,
-    name: 'ABSTRACT JACQUARD SHIRT',
+    name: 'CROSSBODY PHONE CASE',
     price: 800,
     originalPrice: 1100,
     category: 'phone-cases',
     type: 'customized',
-    image: '/assets/Landing/phone-case.png',
+    image: '/assets/Catalog/catalog-phone-case.png',
   },
   {
     id: 3,
-    name: 'EASY KNIT POLO SHIRT WITH ABSTRACT PRINT',
+    name: 'OLIVE CANVAS DUFFEL BAG',
     price: 800,
     originalPrice: 1100,
     category: 'bags',
     type: 'customized',
-    image: '/assets/Landing/duffel-bag.png',
+    image: '/assets/Catalog/catalog-olive-duffel.png',
   },
   {
     id: 4,
-    name: 'CREASED BLACK EFFECT SHIRT',
+    name: 'CLASSIC LOW-TOP SNEAKERS',
     price: 800,
     originalPrice: 1100,
     category: 'shoes',
     type: 'customized',
-    image: '/assets/Landing/sneakers.png',
+    image: '/assets/Catalog/catalog-sneaker.png',
   },
   {
     id: 5,
-    name: 'ABSTRACT JACQUARD SHIRT',
+    name: 'TAILORIT EXCLUSIVE TRAVEL BAG',
     price: 900,
     originalPrice: 1100,
     category: 'bags',
     type: 'customized',
-    image: '/assets/Landing/orange-duffel.png',
+    image: '/assets/Catalog/catalog-black-orange-bag.png',
   },
   {
     id: 6,
@@ -62,7 +57,7 @@ const products = [
     originalPrice: 1100,
     category: 'shoes',
     type: 'customized',
-    image: '/assets/Landing/black-shirt.png',
+    image: '/assets/Catalog/catalog-black-shirt.png',
   },
 ]
 
