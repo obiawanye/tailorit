@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { FiSearch, FiShoppingCart, FiArrowLeft, FiArrowRight } from 'react-icons/fi'
+import { useUser } from '@clerk/react'
+import {
+  FiSearch,
+  FiShoppingCart,
+  FiArrowLeft,
+  FiArrowRight,
+} from 'react-icons/fi'
+import ProfileMenu from '../components/ProfileMenu'
 
 const products = [
   {
@@ -53,20 +60,26 @@ const products = [
   },
 ]
 
-const categories = ['BAGS', 'SHOES', 'PHONE CASES', 'LAPTOPS']
+const categories = [
+  'BAGS',
+  'SHOES',
+  'PHONE CASES',
+  'LAPTOPS',
+]
 
-const Button = ({ children, to = '/catalog', className = '' }) => (
+const Button = ({
+  children,
+  to = '/catalog',
+  className = '',
+}) => (
   <Link
     to={to}
     className={`group relative inline-flex w-fit items-center justify-center ${className}`}
   >
-    {/* Black base */}
     <span className="absolute inset-0 translate-x-[5px] translate-y-[5px] border border-black bg-black" />
 
-    {/* White offset */}
     <span className="absolute inset-0 translate-x-[3px] translate-y-[3px] border border-white bg-white" />
 
-    {/* Orange button */}
     <span className="relative border border-black bg-[#ff5a00] px-8 py-4 text-xs font-bold text-white transition-transform duration-200 group-hover:translate-x-[3px] group-hover:translate-y-[3px] group-active:translate-x-[4px] group-active:translate-y-[4px] sm:px-10">
       {children}
     </span>
@@ -122,8 +135,13 @@ const Stat = ({ value, label }) => (
   </div>
 )
 
-const PatternBackground = ({ children, className = '' }) => (
-  <section className={`relative overflow-hidden bg-[#EAF3F5] ${className}`}>
+const PatternBackground = ({
+  children,
+  className = '',
+}) => (
+  <section
+    className={`relative overflow-hidden bg-[#EAF3F5] ${className}`}
+  >
     <div
       className="pointer-events-none absolute inset-0 opacity-[0.14]"
       style={{
@@ -139,36 +157,40 @@ const PatternBackground = ({ children, className = '' }) => (
 )
 
 export default function Welcome() {
-  const [activeCategory, setActiveCategory] = useState('BAGS')
+  const { isSignedIn } = useUser()
+
+  const [activeCategory, setActiveCategory] =
+    useState('BAGS')
 
   const filteredProducts = products.filter(
-    (product) => product.category === activeCategory
+    (product) =>
+      product.category === activeCategory,
   )
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-[#EAF3F5] text-black">
 
-      
-      <header className="fixed left-0 right-0 top-0 z-[100] border-b border-black/40 bg-[#e8ecef]">
+      {/* =========================================
+          NAVBAR
+      ========================================== */}
+      <header className="sticky left-0 right-0 top-0 z-[100] border-b border-black/30 bg-[#e8ecef]">
+        <div className="mx-auto flex h-[78px] max-w-[1180px] items-center justify-between border-x border-black/30 bg-[#e8ecef] px-5 sm:px-8">
 
-        <div className="mx-auto flex h-[72px] max-w-[1180px] items-center justify-between border-x border-black/30 bg-[#e8ecef] px-5 sm:px-8">
-
-          {/* Logo */}
+          {/* LOGO */}
           <Link
             to="/"
             aria-label="TailorIt home"
+            className="shrink-0"
           >
             <img
-              src='/assets/TailorIt_Logo.png'
+              src="/assets/TailorIt_Logo.png"
               alt="TailorIt"
               className="h-12 w-12 object-contain"
             />
           </Link>
 
-
-          {/* Navigation */}
+          {/* NAVIGATION */}
           <nav className="hidden items-center gap-8 text-sm sm:flex">
-
             <Link
               to="/"
               className="font-semibold text-[#ff5a00]"
@@ -189,34 +211,30 @@ export default function Welcome() {
             >
               My Orders
             </Link>
-
           </nav>
 
-
-          {/* Right side */}
+          {/* RIGHT SIDE */}
           <div className="flex items-center gap-4">
 
-            {/* SIGN UP */}
-            <Link
-              to="/sign-up"
-              className="group relative hidden w-[105px] items-center justify-center sm:inline-flex"
-            >
+            {/* SIGN UP / PROFILE */}
+            {isSignedIn ? (
+              <ProfileMenu />
+            ) : (
+              <Link
+                to="/sign-up"
+                className="group relative hidden w-[105px] items-center justify-center sm:inline-flex"
+              >
+                <span className="absolute inset-0 translate-x-[5px] translate-y-[5px] border border-black bg-black" />
 
-              {/* Black base */}
-              <span className="absolute inset-0 translate-x-[5px] translate-y-[5px] border border-black bg-black" />
+                <span className="absolute inset-0 translate-x-[3px] translate-y-[3px] border border-white bg-white" />
 
-              {/* White offset */}
-              <span className="absolute inset-0 translate-x-[3px] translate-y-[3px] border border-white bg-white" />
+                <span className="relative flex h-[40px] w-full items-center justify-center border border-black bg-[#ff5a00] text-xs font-bold text-white transition-transform duration-200 group-hover:translate-x-[3px] group-hover:translate-y-[3px] group-active:translate-x-[4px] group-active:translate-y-[4px]">
+                  SIGN UP
+                </span>
+              </Link>
+            )}
 
-              {/* Orange button */}
-              <span className="relative flex h-[40px] w-full items-center justify-center border border-black bg-[#ff5a00] text-xs font-bold text-white transition-transform duration-200 group-hover:translate-x-[3px] group-hover:translate-y-[3px] group-active:translate-x-[4px] group-active:translate-y-[4px]">
-                SIGN UP
-              </span>
-
-            </Link>
-
-
-            {/* Search */}
+            {/* SEARCH */}
             <button
               type="button"
               aria-label="Search"
@@ -225,8 +243,7 @@ export default function Welcome() {
               <FiSearch size={21} />
             </button>
 
-
-            {/* Cart */}
+            {/* CART */}
             <Link
               to="/cart"
               aria-label="Cart"
@@ -234,28 +251,29 @@ export default function Welcome() {
             >
               <FiShoppingCart size={22} />
             </Link>
-
           </div>
-
         </div>
-
       </header>
 
-
-      
-      <section className="border-b border-black/40 bg-[#e8ecef] pt-[72px]">
+      {/* =========================================
+          HERO
+      ========================================== */}
+      <section className="border-b border-black/40 bg-[#e8ecef]">
 
         <div className="mx-auto max-w-[1180px] border-x border-black/30 bg-[#e8ecef]">
 
           <div className="grid min-h-[680px] items-center gap-8 px-5 py-12 sm:px-10 sm:py-16 lg:grid-cols-[1fr_1.05fr] lg:gap-0 lg:px-12 lg:py-0">
 
-            {/* Hero text */}
+            {/* HERO TEXT */}
             <div className="z-10">
 
               <h1 className="max-w-[620px] text-5xl font-black uppercase leading-[0.92] tracking-tight sm:text-6xl lg:text-[70px]">
                 Designed for you,
                 <br />
-                Made by <span className="text-[#ff5a00]">you</span>
+                Made by{' '}
+                <span className="text-[#ff5a00]">
+                  you
+                </span>
               </h1>
 
               <p className="mt-7 max-w-[430px] text-sm leading-6 text-gray-600 sm:text-base">
@@ -266,8 +284,7 @@ export default function Welcome() {
                 CREATE NOW!
               </Button>
 
-
-              {/* Stats */}
+              {/* STATS */}
               <div className="mt-12 grid max-w-[530px] grid-cols-3 gap-5">
 
                 <Stat
@@ -286,11 +303,9 @@ export default function Welcome() {
                 />
 
               </div>
-
             </div>
 
-
-            {/* Models */}
+            {/* MODELS */}
             <div className="relative flex items-end justify-center self-stretch">
 
               <img
@@ -300,13 +315,9 @@ export default function Welcome() {
               />
 
             </div>
-
           </div>
-
         </div>
-
       </section>
-
 
       {/* =========================================
           FEATURE STRIP
@@ -321,7 +332,6 @@ export default function Welcome() {
             'Dust proof material',
             'Machine wash cold',
           ].map((item, index) => (
-
             <div
               key={item}
               className={`
@@ -337,13 +347,9 @@ export default function Welcome() {
             >
               {item}
             </div>
-
           ))}
-
         </div>
-
       </section>
-
 
       {/* =========================================
           OUR IMPACT
@@ -366,7 +372,6 @@ export default function Welcome() {
             EXPLORE MORE
           </Button>
 
-
           <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3">
 
             <Stat
@@ -385,11 +390,8 @@ export default function Welcome() {
             />
 
           </div>
-
         </div>
-
       </PatternBackground>
-
 
       {/* =========================================
           WHAT WE MAKE
@@ -408,16 +410,16 @@ export default function Welcome() {
               Recommended products
             </p>
 
-
-            {/* Category filters */}
+            {/* CATEGORY FILTERS */}
             <div className="mx-auto mt-7 flex max-w-[720px] items-center justify-center gap-5 overflow-x-auto border-b border-black/50 pb-3 sm:gap-10">
 
               {categories.map((category) => (
-
                 <button
                   key={category}
                   type="button"
-                  onClick={() => setActiveCategory(category)}
+                  onClick={() =>
+                    setActiveCategory(category)
+                  }
                   className={`
                     shrink-0 pb-3 text-xs font-bold
                     transition-colors sm:text-sm
@@ -430,29 +432,25 @@ export default function Welcome() {
                 >
                   {category}
                 </button>
-
               ))}
-
             </div>
-
           </div>
 
-
-          {/* Product grid */}
+          {/* PRODUCT GRID */}
           <div className="relative mt-10">
 
             {filteredProducts.length > 0 ? (
 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
 
-                {filteredProducts.map((product) => (
-
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                  />
-
-                ))}
+                {filteredProducts.map(
+                  (product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                    />
+                  ),
+                )}
 
               </div>
 
@@ -468,8 +466,7 @@ export default function Welcome() {
 
             )}
 
-
-            {/* Previous */}
+            {/* PREVIOUS */}
             <button
               type="button"
               aria-label="Previous products"
@@ -478,8 +475,7 @@ export default function Welcome() {
               <FiArrowLeft size={20} />
             </button>
 
-
-            {/* Next */}
+            {/* NEXT */}
             <button
               type="button"
               aria-label="Next products"
@@ -490,8 +486,7 @@ export default function Welcome() {
 
           </div>
 
-
-          {/* More products */}
+          {/* MORE PRODUCTS */}
           <div className="mt-10 flex justify-center">
 
             <Button>
@@ -501,9 +496,7 @@ export default function Welcome() {
           </div>
 
         </div>
-
       </PatternBackground>
-
 
       {/* =========================================
           FOR THE PLANET
@@ -515,18 +508,14 @@ export default function Welcome() {
           <div className="flex justify-center">
 
             <img
-              src='/assets/Landing/solar-panel.png'
-
+              src="/assets/Landing/solar-panel.png"
               alt="TailorIt sustainability"
               className="h-auto w-full max-w-[1000px] object-contain"
             />
 
           </div>
-
         </div>
-
       </PatternBackground>
-
 
       {/* =========================================
           FREE DELIVERY
@@ -537,7 +526,7 @@ export default function Welcome() {
 
           <div className="relative min-h-[280px] overflow-hidden bg-black px-8 py-10 text-white sm:px-12 sm:py-12 lg:min-h-[320px]">
 
-            {/* Pattern inside CTA */}
+            {/* PATTERN */}
             <div
               className="pointer-events-none absolute inset-0 opacity-[0.14]"
               style={{
@@ -545,7 +534,6 @@ export default function Welcome() {
                 backgroundRepeat: 'repeat',
               }}
             />
-
 
             <div className="relative z-10 max-w-[620px]">
 
@@ -559,20 +547,16 @@ export default function Welcome() {
 
             </div>
 
-
-            {/* Shopping bag */}
+            {/* SHOPPING BAG */}
             <img
-              src='/assets/Landing/orange-shopping-bag.png'
+              src="/assets/Landing/orange-shopping-bag.png"
               alt="TailorIt shopping bag"
               className="absolute bottom-[-20px] right-[5%] z-10 hidden w-[240px] object-contain sm:block lg:w-[300px]"
             />
 
           </div>
-
         </div>
-
       </PatternBackground>
-
 
       {/* =========================================
           FOOTER
@@ -586,7 +570,6 @@ export default function Welcome() {
             backgroundRepeat: 'repeat',
           }}
         />
-
 
         <div className="relative mx-auto grid max-w-[1180px] grid-cols-2 gap-10 border-x border-black/30 px-5 py-12 sm:px-10 lg:grid-cols-4 lg:px-12">
 
@@ -635,7 +618,6 @@ export default function Welcome() {
               ],
             ],
           ].map(([heading, links]) => (
-
             <div key={heading}>
 
               <h3 className="text-sm font-black">
@@ -645,7 +627,6 @@ export default function Welcome() {
               <div className="mt-5 space-y-2 text-xs text-gray-700">
 
                 {links.map((link) => (
-
                   <a
                     href="#"
                     key={link}
@@ -653,19 +634,16 @@ export default function Welcome() {
                   >
                     {link}
                   </a>
-
                 ))}
 
               </div>
 
             </div>
-
           ))}
 
         </div>
 
-
-        {/* Bottom black bar */}
+        {/* BOTTOM BLACK BAR */}
         <div className="relative h-24 bg-black" />
 
       </footer>

@@ -10,6 +10,8 @@ import ResetPassword from './pages/ResetPassword'
 import SetNewPassword from './pages/SetNewPassword'
 import ProductCustomization from './pages/ProductCustomization'
 import Cart from './pages/Cart'
+import Checkout from './pages/Checkout'
+import MyOrders from './pages/MyOrders'
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
       <Route path="/set-new-password" element={<SetNewPassword />} />
       <Route path="/product/:productId" element={<ProductCustomization />} />
       <Route path="/cart" element={<Cart />} />
+      <Route path="/checkout" element={<Checkout />} />
+      <Route path="/my-orders" element={<MyOrders />} />
     </Routes>
   )
 }

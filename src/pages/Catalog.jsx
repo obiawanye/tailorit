@@ -1,8 +1,13 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useUser } from '@clerk/react'
-import {FiSearch, FiShoppingCart, FiChevronDown, FiX} from 'react-icons/fi'
-
+import {
+  FiSearch,
+  FiShoppingCart,
+  FiX,
+} from 'react-icons/fi'
+import ProfileMenu from '../components/ProfileMenu'
+import ProductFilters from '../components/ProductFilters'
 
 const products = [
   {
@@ -55,42 +60,14 @@ const products = [
     name: 'CREASED BLACK EFFECT SHIRT',
     price: 800,
     originalPrice: 1100,
-    category: 'shoes',
+    category: 'shirts',
     type: 'customized',
     image: '/assets/Catalog/catalog-black-shirt.png',
   },
 ]
 
-const formatPrice = (price) => `N${price.toLocaleString()}`
-
-function FilterCheckbox({ checked, onChange, label }) {
-  return (
-    <label className="flex cursor-pointer items-center gap-4 text-[16px]">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="peer sr-only"
-      />
-
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[3px] border border-black bg-white transition peer-checked:border-[#ff5a00] peer-checked:bg-[#ff5a00]">
-        {checked && (
-          <svg
-            viewBox="0 0 24 24"
-            className="h-4 w-4 text-white"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-          >
-            <path d="M5 12.5l4 4L19 7" />
-          </svg>
-        )}
-      </span>
-
-      <span>{label}</span>
-    </label>
-  )
-}
+const formatPrice = (price) =>
+  `N${price.toLocaleString()}`
 
 function ProductCard({ product }) {
   return (
@@ -135,56 +112,40 @@ function ProductCard({ product }) {
           </span>
         </button>
       </div>
-
-      <div className="h-2 bg-white" />
     </Link>
   )
 }
 
 export default function Catalog() {
-  const { isSignedIn, user } = useUser()
+  const { isSignedIn } = useUser()
 
-  const [selectedCategories, setSelectedCategories] =
-    useState([])
+  const [category, setCategory] =
+    useState('all')
 
-  const [selectedTypes, setSelectedTypes] =
-    useState([])
+  const [type, setType] =
+    useState('all')
 
-  const [minPrice, setMinPrice] = useState(0)
-  const [maxPrice, setMaxPrice] = useState(300000)
+  const [minPrice, setMinPrice] =
+    useState(0)
 
-  const [sortBy, setSortBy] = useState('Popular')
+  const [maxPrice, setMaxPrice] =
+    useState(300000)
 
-  const [searchQuery, setSearchQuery] = useState('')
-  const [showSearch, setShowSearch] = useState(false)
+  const [sortBy, setSortBy] =
+    useState('popular')
 
-  const toggleCategory = (category) => {
-    if (category === 'all') {
-      setSelectedCategories([])
-      return
-    }
+  const [searchQuery, setSearchQuery] =
+    useState('')
 
-    setSelectedCategories((current) =>
-      current.includes(category)
-        ? current.filter((item) => item !== category)
-        : [...current, category],
-    )
-  }
-
-  const toggleType = (type) => {
-    setSelectedTypes((current) =>
-      current.includes(type)
-        ? current.filter((item) => item !== type)
-        : [...current, type],
-    )
-  }
+  const [showSearch, setShowSearch] =
+    useState(false)
 
   const clearFilters = () => {
-    setSelectedCategories([])
-    setSelectedTypes([])
+    setCategory('all')
+    setType('all')
     setMinPrice(0)
     setMaxPrice(300000)
-    setSortBy('Popular')
+    setSortBy('popular')
     setSearchQuery('')
   }
 
@@ -194,15 +155,17 @@ export default function Catalog() {
         searchQuery.trim() === '' ||
         product.name
           .toLowerCase()
-          .includes(searchQuery.toLowerCase())
+          .includes(
+            searchQuery.toLowerCase(),
+          )
 
       const matchesCategory =
-        selectedCategories.length === 0 ||
-        selectedCategories.includes(product.category)
+        category === 'all' ||
+        product.category === category
 
       const matchesType =
-        selectedTypes.length === 0 ||
-        selectedTypes.includes(product.type)
+        type === 'all' ||
+        product.type === type
 
       const matchesPrice =
         product.price >= minPrice &&
@@ -216,13 +179,13 @@ export default function Catalog() {
       )
     })
 
-    if (sortBy === 'Price: Low to High') {
+    if (sortBy === 'price-low') {
       result = [...result].sort(
         (a, b) => a.price - b.price,
       )
     }
 
-    if (sortBy === 'Price: High to Low') {
+    if (sortBy === 'price-high') {
       result = [...result].sort(
         (a, b) => b.price - a.price,
       )
@@ -231,28 +194,12 @@ export default function Catalog() {
     return result
   }, [
     searchQuery,
-    selectedCategories,
-    selectedTypes,
+    category,
+    type,
     minPrice,
     maxPrice,
     sortBy,
   ])
-
-  const handleMinPriceChange = (event) => {
-    const value = Number(event.target.value)
-
-    if (value <= maxPrice) {
-      setMinPrice(value)
-    }
-  }
-
-  const handleMaxPriceChange = (event) => {
-    const value = Number(event.target.value)
-
-    if (value >= minPrice) {
-      setMaxPrice(value)
-    }
-  }
 
   const toggleSearch = () => {
     if (showSearch) {
@@ -265,22 +212,27 @@ export default function Catalog() {
 
   return (
     <main className="min-h-screen bg-white text-black">
-      {/* NAVBAR */}
+      {/* =========================================
+          NAVBAR
+      ========================================== */}
+
       <header className="sticky top-0 z-50 border-b border-[#dddddd] bg-white">
         <nav className="mx-auto flex h-[92px] w-full items-center justify-between px-5 sm:px-8 lg:px-12">
           {/* LOGO */}
+
           <Link
             to="/"
             className="shrink-0"
           >
             <img
-              src='/assets/TailorIt_Logo.png'
+              src="/assets/TailorIt_Logo.png"
               alt="TailorIt"
               className="h-[58px] w-[58px] object-contain sm:h-[64px] sm:w-[64px]"
             />
           </Link>
 
-          {/* DESKTOP NAVIGATION */}
+          {/* NAVIGATION */}
+
           <div className="hidden items-center gap-10 text-[16px] md:flex lg:gap-12">
             <Link
               to="/"
@@ -305,8 +257,10 @@ export default function Catalog() {
           </div>
 
           {/* RIGHT SIDE */}
+
           <div className="flex items-center gap-4 sm:gap-6">
-            {/* DESKTOP SEARCH INPUT */}
+            {/* SEARCH INPUT */}
+
             {showSearch && (
               <div className="hidden items-center sm:flex">
                 <div className="relative">
@@ -314,7 +268,9 @@ export default function Catalog() {
                     type="text"
                     value={searchQuery}
                     onChange={(event) =>
-                      setSearchQuery(event.target.value)
+                      setSearchQuery(
+                        event.target.value,
+                      )
                     }
                     placeholder="Search products..."
                     autoFocus
@@ -338,21 +294,9 @@ export default function Catalog() {
             )}
 
             {/* PROFILE / SIGN IN */}
+
             {isSignedIn ? (
-              <Link
-                to="/profile"
-                className="block shrink-0"
-                aria-label="Profile"
-              >
-                <img
-                  src={
-                    user?.imageUrl ||
-                    '/assets/profile-placeholder.jpeg'
-                  }
-                  alt="Profile"
-                  className="h-10 w-10 rounded-full border border-[#dddddd] object-cover transition hover:opacity-80"
-                />
-              </Link>
+              <ProfileMenu />
             ) : (
               <Link
                 to="/sign-in"
@@ -363,6 +307,7 @@ export default function Catalog() {
             )}
 
             {/* SEARCH BUTTON */}
+
             <button
               type="button"
               aria-label="Search"
@@ -377,6 +322,7 @@ export default function Catalog() {
             </button>
 
             {/* CART */}
+
             <Link
               to="/cart"
               aria-label="Shopping cart"
@@ -388,6 +334,7 @@ export default function Catalog() {
         </nav>
 
         {/* MOBILE SEARCH */}
+
         {showSearch && (
           <div className="border-t border-[#dddddd] px-5 py-3 sm:hidden">
             <div className="relative">
@@ -395,7 +342,9 @@ export default function Catalog() {
                 type="text"
                 value={searchQuery}
                 onChange={(event) =>
-                  setSearchQuery(event.target.value)
+                  setSearchQuery(
+                    event.target.value,
+                  )
                 }
                 placeholder="Search products..."
                 autoFocus
@@ -419,9 +368,13 @@ export default function Catalog() {
         )}
       </header>
 
-      {/* CATALOG */}
+      {/* =========================================
+          CATALOG
+      ========================================== */}
+
       <section className="mx-auto w-full max-w-[1600px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
         {/* HEADING */}
+
         <div className="mb-8 flex items-start justify-between gap-5">
           <div>
             <h1 className="text-[32px] font-bold tracking-[-1.5px] sm:text-[40px] lg:text-[48px]">
@@ -438,216 +391,38 @@ export default function Catalog() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[310px_1fr] xl:grid-cols-[330px_1fr]">
-          {/* FILTER SIDEBAR */}
-          <aside className="h-fit rounded-[6px] border border-[#d8d8d8] p-6 lg:sticky lg:top-[116px]">
-            <div className="flex items-center justify-between">
-              <h2 className="text-[20px] font-bold">
-                FILTERS
-              </h2>
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
+          {/* REUSABLE FILTERS */}
 
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="text-sm transition hover:text-[#ff5a00]"
-              >
-                Clear all
-              </button>
-            </div>
-
-            <div className="my-6 h-px bg-[#dddddd]" />
-
-            {/* CATEGORIES */}
-            <div>
-              <h3 className="mb-6 text-[17px] font-bold">
-                Categories
-              </h3>
-
-              <div className="space-y-5">
-                <FilterCheckbox
-                  label="All products"
-                  checked={
-                    selectedCategories.length === 0
-                  }
-                  onChange={() =>
-                    toggleCategory('all')
-                  }
-                />
-
-                <FilterCheckbox
-                  label="Shoes"
-                  checked={selectedCategories.includes(
-                    'shoes',
-                  )}
-                  onChange={() =>
-                    toggleCategory('shoes')
-                  }
-                />
-
-                <FilterCheckbox
-                  label="Bags"
-                  checked={selectedCategories.includes(
-                    'bags',
-                  )}
-                  onChange={() =>
-                    toggleCategory('bags')
-                  }
-                />
-
-                <FilterCheckbox
-                  label="Laptops"
-                  checked={selectedCategories.includes(
-                    'laptops',
-                  )}
-                  onChange={() =>
-                    toggleCategory('laptops')
-                  }
-                />
-
-                <FilterCheckbox
-                  label="Phone Cases"
-                  checked={selectedCategories.includes(
-                    'phone-cases',
-                  )}
-                  onChange={() =>
-                    toggleCategory('phone-cases')
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="my-6 h-px bg-[#dddddd]" />
-
-            {/* PRICE RANGE */}
-            <div>
-              <h3 className="mb-7 text-[17px] font-bold">
-                Price Range
-              </h3>
-
-              <div className="relative h-5">
-                <div className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 bg-[#ff5a00]" />
-
-                <input
-                  type="range"
-                  min="0"
-                  max="300000"
-                  step="100"
-                  value={minPrice}
-                  onChange={handleMinPriceChange}
-                  className="range-input absolute inset-0 z-20 w-full appearance-none bg-transparent"
-                  aria-label="Minimum price"
-                />
-
-                <input
-                  type="range"
-                  min="0"
-                  max="300000"
-                  step="100"
-                  value={maxPrice}
-                  onChange={handleMaxPriceChange}
-                  className="range-input pointer-events-none absolute inset-0 z-10 w-full appearance-none bg-transparent"
-                  aria-label="Maximum price"
-                />
-
-                <div
-                  className="pointer-events-none absolute top-1/2 z-30 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-black bg-white"
-                  style={{
-                    left: `${(minPrice / 300000) * 100}%`,
-                  }}
-                />
-
-                <div
-                  className="pointer-events-none absolute top-1/2 z-30 h-5 w-5 -translate-y-1/2 rounded-full border border-black bg-white"
-                  style={{
-                    left: `${(maxPrice / 300000) * 100}%`,
-                  }}
-                />
-              </div>
-
-              <div className="mt-5 flex justify-between text-sm font-semibold">
-                <span>
-                  {formatPrice(minPrice)}
-                </span>
-
-                <span>
-                  {maxPrice >= 300000
-                    ? 'N300,000+'
-                    : formatPrice(maxPrice)}
-                </span>
-              </div>
-            </div>
-
-            <div className="my-6 h-px bg-[#dddddd]" />
-
-            {/* TYPE */}
-            <div>
-              <h3 className="mb-6 text-[17px] font-bold">
-                Type
-              </h3>
-
-              <div className="space-y-5">
-                <FilterCheckbox
-                  label="Plain"
-                  checked={selectedTypes.includes(
-                    'plain',
-                  )}
-                  onChange={() =>
-                    toggleType('plain')
-                  }
-                />
-
-                <FilterCheckbox
-                  label="Customized"
-                  checked={selectedTypes.includes(
-                    'customized',
-                  )}
-                  onChange={() =>
-                    toggleType('customized')
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="my-6 h-px bg-[#dddddd]" />
-
-            {/* SORT */}
-            <div>
-              <h3 className="mb-5 text-[17px] font-bold">
-                Sort By
-              </h3>
-
-              <div className="relative">
-                <select
-                  value={sortBy}
-                  onChange={(event) =>
-                    setSortBy(event.target.value)
-                  }
-                  className="w-full appearance-none rounded-[6px] border border-[#d2d2d2] bg-white px-4 py-3 pr-10 text-[16px] outline-none transition focus:border-[#ff5a00]"
-                >
-                  <option>Popular</option>
-                  <option>
-                    Price: Low to High
-                  </option>
-                  <option>
-                    Price: High to Low
-                  </option>
-                </select>
-
-                <FiChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2" />
-              </div>
-            </div>
-          </aside>
+          <ProductFilters
+            category={category}
+            setCategory={setCategory}
+            type={type}
+            setType={setType}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            setMinPrice={setMinPrice}
+            setMaxPrice={setMaxPrice}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            search={searchQuery}
+            setSearch={setSearchQuery}
+            clearFilters={clearFilters}
+          />
 
           {/* PRODUCT GRID */}
+
           <div>
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 gap-x-8 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
-                {filteredProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                  />
-                ))}
+                {filteredProducts.map(
+                  (product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                    />
+                  ),
+                )}
               </div>
             ) : (
               <div className="flex min-h-[460px] items-center justify-center border border-dashed border-[#cfcfcf]">
@@ -673,38 +448,6 @@ export default function Catalog() {
           </div>
         </div>
       </section>
-
-      {/* RANGE SLIDER STYLES */}
-      <style>{`
-        .range-input::-webkit-slider-thumb {
-          appearance: none;
-          width: 20px;
-          height: 20px;
-          border-radius: 9999px;
-          background: white;
-          border: 1px solid black;
-          cursor: pointer;
-          pointer-events: auto;
-        }
-
-        .range-input::-moz-range-thumb {
-          width: 20px;
-          height: 20px;
-          border-radius: 9999px;
-          background: white;
-          border: 1px solid black;
-          cursor: pointer;
-          pointer-events: auto;
-        }
-
-        .range-input::-webkit-slider-runnable-track {
-          background: transparent;
-        }
-
-        .range-input::-moz-range-track {
-          background: transparent;
-        }
-      `}</style>
     </main>
   )
 }
