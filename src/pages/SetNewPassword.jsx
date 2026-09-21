@@ -80,15 +80,15 @@ function SetNewPassword() {
 
   return (
     <AuthLayout>
-      <div className="w-full text-white">
+      <div className="w-full">
 
         {/* Heading */}
         <div>
-          <h1 className="font-serif text-[32px] font-medium leading-[1.05] tracking-[-0.02em] sm:text-[36px]">
+          <h1 className="font-libre text-[#333435] text-[32px] font-medium sm:text-[36px]">
             Create New Password
           </h1>
 
-          <p className="mt-3 text-sm leading-5 text-white/80">
+          <p className="mt-3 text-sm leading-5 text-[#8F8F8F]">
             Create your new unique password
           </p>
         </div>
@@ -98,7 +98,7 @@ function SetNewPassword() {
 
           {/* New Password */}
           <div>
-            <label htmlFor="password" className="mb-2 block text-sm text-white/80">
+            <label htmlFor="password" className="mb-2 block text-sm text-[#8F8F8F]">
               New Password
             </label>
 
@@ -113,7 +113,7 @@ function SetNewPassword() {
 
           {/* Confirm Password */}
           <div className="mt-3">
-            <label htmlFor="confirmPassword" className="mb-2 block text-sm text-white/80">
+            <label htmlFor="confirmPassword" className="mb-2 block text-sm text-[#8F8F8F]">
               Confirm Password
             </label>
 
@@ -127,8 +127,8 @@ function SetNewPassword() {
           </div>
 
           {/* Password Requirements */}
-          <div className="mt-6">
-            <p className="text-sm text-white/80">
+          <div className="mt-6 text-[#8F8F8F]">
+            <p className="text-sm">
               Your password must contain:
             </p>
 
@@ -136,44 +136,44 @@ function SetNewPassword() {
 
               {/* Minimum 8 Characters */}
               <div className="flex items-center gap-3">
-                <span className={`h-5 w-5 rounded border ${passwordRules.length ? 'border-[#FD5C02] bg-[#FD5C02]' : 'border-white/70'}`}>
-                  {passwordRules.length && <FiCheck className="h-full w-full p-0.5 text-white" />}
+                <span className={`h-5 w-5 rounded border ${passwordRules.length ? 'border-[#FD5C02] bg-[#FD5C02]' : 'text-[#8F8F8F]'}`}>
+                  {passwordRules.length && <FiCheck className="h-full w-full p-0.5 text-[#FFFFFF]" />}
                 </span>
 
-                <span className="text-sm text-white/70">
+                <span className="text-sm">
                   Minimum of 8 characters
                 </span>
               </div>
 
               {/* Upper + Lower Case */}
               <div className="flex items-center gap-3">
-                <span className={`h-5 w-5 rounded border ${passwordRules.case ? 'border-[#FD5C02] bg-[#FD5C02]' : 'border-white/70'}`}>
-                  {passwordRules.case && <FiCheck className="h-full w-full p-0.5 text-white" />}
+                    <span className={`h-5 w-5 rounded border ${passwordRules.case ? 'border-[#FD5C02] bg-[#FD5C02]' : 'text-[#8F8F8F]'}`}>
+                    {passwordRules.case && <FiCheck className="h-full w-full p-0.5 text-[#FFFFFF]" />}
                 </span>
 
-                <span className="text-sm text-white/70">
+                <span className="text-sm">
                   Combination of upper and lower case letters
                 </span>
               </div>
 
               {/* Number */}
               <div className="flex items-center gap-3">
-                <span className={`h-5 w-5 rounded border ${passwordRules.number ? 'border-[#FD5C02] bg-[#FD5C02]' : 'border-white/70'}`}>
-                  {passwordRules.number && <FiCheck className="h-full w-full p-0.5 text-white" />}
+                <span className={`h-5 w-5 rounded border ${passwordRules.number ? 'border-[#FD5C02] bg-[#FD5C02]' : 'text-[#8F8F8F]'}`}>
+                  {passwordRules.number && <FiCheck className="h-full w-full p-0.5 text-[#FFFFFF]" />}
                 </span>
 
-                <span className="text-sm text-white/70">
+                <span className="text-sm text-[#8F8F8F]">
                   Atleast one number
                 </span>
               </div>
 
               {/* Special Character */}
               <div className="flex items-center gap-3">
-                <span className={`h-5 w-5 rounded border ${passwordRules.special ? 'border-[#FD5C02] bg-[#FD5C02]' : 'border-white/70'}`}>
-                  {passwordRules.special && <FiCheck className="h-full w-full p-0.5 text-white" />}
+                <span className={`h-5 w-5 rounded border ${passwordRules.special ? 'border-[#FD5C02] bg-[#FD5C02]' : 'text-[#8F8F8F]'}`}>
+                  {passwordRules.special && <FiCheck className="h-full w-full p-0.5 text-[#FFFFFF]" />}
                 </span>
 
-                <span className="text-sm text-white/70">
+                <span className="text-sm text-[#8F8F8F]">
                   Atleast one special character (e.g *, \, $)
                 </span>
               </div>

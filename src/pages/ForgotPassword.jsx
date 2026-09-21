@@ -41,25 +41,25 @@ export default function ForgotPassword() {
 
   return (
     <AuthLayout>
-      <div className="w-full text-white">
+      <div className="w-full ">
 
         {/* Heading */}
         <div>
-          <h1 className="font-serif text-[32px] font-bold leading-[1.05] tracking-[-0.02em] sm:text-[36px]">
+          <h1 className="font-libre text-[32px] font-bold text-[#FD5C02]">
             Forgot Your Password?
           </h1>
 
-          <p className="mt-3 text-sm leading-5 text-[#E1E1E1]">
+          <p className="text-[16px] text-[#3C3B3B]">
             Don't worry, it happens! Please enter your registered email
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="mt-9">
+        <form onSubmit={handleSubmit} className="mt-[42px]">
 
           {/* Email */}
           <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-normal text-white">
+            <label htmlFor="email" className="mb-2 block text-sm font-normal text-[#3C3B3B]">
               Email address
             </label>
 
@@ -80,13 +80,13 @@ export default function ForgotPassword() {
           )}
 
           {/* Send Reset Link */}
-          <button type="submit" disabled={isLoading} className="mt-7 h-14 w-full rounded-md bg-[#FD5C02] text-sm font-medium text-white transition hover:bg-[#E04B02] disabled:cursor-not-allowed disabled:opacity-60">
+          <button type="submit" disabled={isLoading} className="mt-[42px] h-14 w-full rounded-md bg-[#FD5C02] text-sm font-medium text-white transition hover:bg-[#E04B02] disabled:cursor-not-allowed disabled:opacity-60">
             {isLoading ? 'Sending...' : 'Send reset link'}
           </button>
         </form>
 
         {/* Back to Login */}
-        <Link to="/sign-in" className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-md border border-[#D2D2D2] text-sm font-medium text-[#E1E1E1] transition hover:bg-white/10 hover:text-white">
+        <Link to="/sign-in" className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-md border border-[#000000] text-sm font-medium text-[#000000] transition hover:bg-white/10 hover:text-white">
           <FiArrowLeft className="h-4 w-4" />
           Back to log in
         </Link>
