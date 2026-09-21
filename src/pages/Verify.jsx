@@ -91,15 +91,15 @@ function Verify() {
 
   return (
     <AuthLayout>
-      <div className="w-full text-white">
+      <div className="w-full">
 
         {/* Heading */}
         <div>
-          <h1 className="font-serif text-[32px] font-medium leading-[1.05] tracking-[-0.02em] sm:text-[36px]">
+          <h1 className="font-libre text-[32px] font-bold text-[#000000]">
             Check Your Email
           </h1>
 
-          <p className="mt-3 text-sm leading-5 text-white/80">
+          <p className="mt-3 text-sm  text-[#000000]">
             Enter the code shared on your email
           </p>
         </div>
@@ -121,7 +121,7 @@ function Verify() {
               onKeyDown={(event) => handleKeyDown(index, event)}
               onPaste={handlePaste}
               aria-label={`Verification code digit ${index + 1}`}
-              className="h-12 min-w-0 flex-1 rounded-md border border-white/20 bg-white text-center text-lg text-black outline-none transition focus:border-[#ff5a00] focus:ring-1 focus:ring-[#ff5a00] sm:h-14"
+              className="h-12 min-w-0 flex-1 rounded-md border border-[#808080] border-[2px] bg-white text-center text-lg text-black outline-none transition focus:border-[#ff5a00] focus:ring-1 focus:ring-[#ff5a00] sm:h-14"
             />
           ))}
         </div>
@@ -134,17 +134,17 @@ function Verify() {
         )}
 
         {/* Verify Button */}
-        <button type="button" onClick={handleVerify} disabled={isLoading} className="mt-7 h-12 w-full rounded-md bg-[#ff5a00] text-sm font-medium text-white transition hover:bg-[#e94f00] disabled:cursor-not-allowed disabled:opacity-60">
+        <button type="button" onClick={handleVerify} disabled={isLoading} className="mt-[32px] h-[56px] w-full rounded-md bg-[#ff5a00] text-sm font-medium text-white transition hover:bg-[#e94f00] disabled:cursor-not-allowed disabled:opacity-60">
           {isLoading ? 'Verifying...' : 'Verify'}
         </button>
 
         {/* Resend */}
-        <div className="mt-6 flex items-center justify-between text-sm">
-          <span className="text-white/80">
-            Didn’t receive code?
+        <div className="mt-[32px] flex items-center justify-between text-sm">
+          <span className="text-[#808080]">
+            Didn't receive code?
           </span>
 
-          <button type="button" className="text-[#ff5a00] transition hover:underline">
+          <button type="button" className="text-[#ff5a00] text-[18px] transition hover:underline">
             Resend
           </button>
         </div>
