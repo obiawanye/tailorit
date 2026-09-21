@@ -162,6 +162,26 @@ export default function Welcome() {
   const [activeCategory, setActiveCategory] =
     useState('BAGS')
 
+  const handlePreviousCategory = () => {
+    setActiveCategory((currentCategory) => {
+      const currentIndex = categories.indexOf(currentCategory)
+      const previousIndex =
+        (currentIndex - 1 + categories.length) % categories.length
+
+      return categories[previousIndex]
+    })
+  }
+
+  const handleNextCategory = () => {
+    setActiveCategory((currentCategory) => {
+      const currentIndex = categories.indexOf(currentCategory)
+      const nextIndex =
+        (currentIndex + 1) % categories.length
+
+      return categories[nextIndex]
+    })
+  }
+
   const filteredProducts = products.filter(
     (product) =>
       product.category === activeCategory,
@@ -461,7 +481,8 @@ export default function Welcome() {
             {/* PREVIOUS */}
             <button
               type="button"
-              aria-label="Previous products"
+              aria-label="Previous category"
+              onClick={handlePreviousCategory}
               className="absolute -left-5 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center border border-black bg-[#EAF3F5] transition-transform hover:scale-90 lg:flex"
             >
               <FiArrowLeft size={20} />
@@ -470,7 +491,8 @@ export default function Welcome() {
             {/* NEXT */}
             <button
               type="button"
-              aria-label="Next products"
+              aria-label="Next category"
+              onClick={handleNextCategory}
               className="absolute -right-5 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center border border-black bg-[#EAF3F5] transition-transform hover:scale-90 lg:flex"
             >
               <FiArrowRight size={20} />
