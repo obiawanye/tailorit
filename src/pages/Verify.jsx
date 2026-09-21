@@ -254,7 +254,7 @@ function Verify() {
         </div>
 
         {/* Verify Button */}
-        <div className="mt-7 h-12 w-full bg-white p-[2px]">
+        <div className="mt-7 h-12 w-full  p-[2px]">
           <div className="relative h-full w-full border border-black">
             <button
               type="button"

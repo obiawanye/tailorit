@@ -1,4 +1,8 @@
-import { FiAlertCircle, FiCheckCircle, FiX } from 'react-icons/fi'
+import {
+  FiAlertCircle,
+  FiCheckCircle,
+  FiX,
+} from 'react-icons/fi'
 
 function AuthModal({
   isOpen,
@@ -6,67 +10,55 @@ function AuthModal({
   title,
   message,
   type = 'error',
-  buttonText = 'OK',
 }) {
   if (!isOpen) return null
 
   const isSuccess = type === 'success'
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-5"
-      onMouseDown={onClose}
-    >
-      <div
-        className="relative w-full max-w-[420px] bg-[#e8ecef] p-6 sm:p-8"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
+    <div className="fixed right-5 top-5 z-[100] w-[calc(100%-40px)] max-w-[380px]">
+      <div className="relative border border-black bg-[#e8ecef] p-5 shadow-[4px_4px_0px_#000]">
         {/* Close */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 text-gray-500 transition hover:text-black"
-          aria-label="Close"
+          className="absolute right-3 top-3 text-gray-500 transition-colors duration-200 hover:text-black"
+          aria-label="Close notification"
         >
-          <FiX className="text-xl" />
+          <FiX className="text-lg" />
         </button>
 
-        {/* Icon */}
-        <div className="mb-5 flex justify-center">
-          {isSuccess ? (
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ff5a00]">
-              <FiCheckCircle className="text-2xl text-white" />
-            </div>
-          ) : (
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ff5a00]">
-              <FiAlertCircle className="text-2xl text-white" />
-            </div>
-          )}
-        </div>
-
         {/* Content */}
-        <div className="text-center">
-          <h2 className="font-serif text-2xl font-medium text-black">
-            {title}
-          </h2>
+        <div className="flex items-start gap-4 pr-6">
+          {/* Icon */}
+          <div
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+              isSuccess
+                ? 'bg-[#ff5a00]'
+                : 'bg-[#ff5a00]'
+            }`}
+          >
+            {isSuccess ? (
+              <FiCheckCircle className="text-xl text-white" />
+            ) : (
+              <FiAlertCircle className="text-xl text-white" />
+            )}
+          </div>
 
-          <p className="mt-3 text-sm leading-6 text-gray-600">
-            {message}
-          </p>
-        </div>
+          {/* Text */}
+          <div className="min-w-0 pt-0.5">
+            <h2 className="pr-4 font-serif text-lg font-medium leading-tight text-black">
+              {title}
+            </h2>
 
-        {/* Button */}
-        <div className="mx-auto mt-7 h-11 w-full max-w-[220px] bg-white p-[2px]">
-          <div className="relative h-full w-full border border-black">
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute inset-0 h-full w-full -translate-x-[4px] -translate-y-[4px] bg-[#ff5a00] text-sm font-medium text-white transition-transform duration-200 hover:translate-x-0 hover:translate-y-0"
-            >
-              {buttonText}
-            </button>
+            <p className="mt-1.5 text-sm leading-5 text-gray-600">
+              {message}
+            </p>
           </div>
         </div>
+
+        {/* Orange accent */}
+        <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#ff5a00]" />
       </div>
     </div>
   )
