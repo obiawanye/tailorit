@@ -170,9 +170,7 @@ export default function Welcome() {
   return (
     <main className="min-h-dvh overflow-x-hidden bg-[#EAF3F5] text-black">
 
-      {/* =========================================
-          NAVBAR
-      ========================================== */}
+      {/* NAVBAR */}
       <header className="sticky left-0 right-0 top-0 z-[100] border-b border-black/30 bg-[#e8ecef]">
         <div className="mx-auto flex h-[78px] max-w-[1180px] items-center justify-between border-x border-black/30 bg-[#e8ecef] px-5 sm:px-8">
 
@@ -255,9 +253,7 @@ export default function Welcome() {
         </div>
       </header>
 
-      {/* =========================================
-          HERO
-      ========================================== */}
+      {/* HERO */}
       <section className="border-b border-black/40 bg-[#e8ecef]">
 
         <div className="mx-auto max-w-[1180px] border-x border-black/30 bg-[#e8ecef]">
@@ -319,9 +315,7 @@ export default function Welcome() {
         </div>
       </section>
 
-      {/* =========================================
-          FEATURE STRIP
-      ========================================== */}
+      {/* FEATURE STRIP */}
       <section className="border-b border-black/40">
 
         <div className="mx-auto grid max-w-[1180px] grid-cols-2 border-x border-black/30 bg-[#EAF3F5] sm:grid-cols-4">
@@ -393,9 +387,7 @@ export default function Welcome() {
         </div>
       </PatternBackground>
 
-      {/* =========================================
-          WHAT WE MAKE
-      ========================================== */}
+      {/* WHAT WE MAKE */}
       <PatternBackground className="border-b border-black/40">
 
         <div className="mx-auto max-w-[1180px] border-x border-black/30 px-5 py-16 sm:px-10 sm:py-20 lg:px-12">
