@@ -5,6 +5,7 @@ import { FiEye, FiEyeOff } from 'react-icons/fi'
 import { FcGoogle } from 'react-icons/fc'
 
 import AuthLayout from '../components/AuthLayout'
+import AuthModal from '../components/AuthModal'
 
 function SignUp() {
   const { signUp, errors, fetchStatus } = useSignUp()
@@ -17,14 +18,43 @@ function SignUp() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  const [errorMessage, setErrorMessage] = useState('')
+  const [authModal, setAuthModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'error',
+  })
+
+  const isLoading = fetchStatus === 'fetching'
+
+  const openAuthModal = (
+    title,
+    message,
+    type = 'error'
+  ) => {
+    setAuthModal({
+      isOpen: true,
+      title,
+      message,
+      type,
+    })
+  }
+
+  const closeAuthModal = () => {
+    setAuthModal((current) => ({
+      ...current,
+      isOpen: false,
+    }))
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    setErrorMessage('')
 
     if (password !== confirmPassword) {
-      setErrorMessage('Passwords do not match.')
+      openAuthModal(
+        'Passwords do not match',
+        'Please make sure both password fields contain the same password.'
+      )
       return
     }
 
@@ -35,10 +65,33 @@ function SignUp() {
       })
 
       if (error) {
-        console.error(error)
-        setErrorMessage(
-          error.message || 'Unable to create your account.'
+        console.error(
+          'Clerk sign-up error:',
+          error
         )
+
+        const errorCode =
+          error?.code ||
+          error?.errors?.[0]?.code ||
+          ''
+
+        if (
+          errorCode === 'form_identifier_exists' ||
+          errorCode ===
+            'form_identifier_exists_for_instance'
+        ) {
+          openAuthModal(
+            'Account already exists',
+            'An account with this email already exists. Try signing in instead.'
+          )
+        } else {
+          openAuthModal(
+            'Unable to create account',
+            error.message ||
+              'We were unable to create your account. Please try again.'
+          )
+        }
+
         return
       }
 
@@ -46,24 +99,35 @@ function SignUp() {
         await signUp.verifications.sendEmailCode()
 
       if (verificationError) {
-        console.error(verificationError)
-        setErrorMessage(
-          verificationError.message ||
-            'Unable to send the verification code.'
+        console.error(
+          'Verification email error:',
+          verificationError
         )
+
+        openAuthModal(
+          'Verification email failed',
+          verificationError.message ||
+            'We couldn’t send your verification code. Please try again.'
+        )
+
         return
       }
 
       navigate('/verify')
     } catch (error) {
-      console.error(error)
-      setErrorMessage('Something went wrong. Please try again.')
+      console.error(
+        'Sign-up error:',
+        error
+      )
+
+      openAuthModal(
+        'Something went wrong',
+        'We couldn’t create your account. Please try again.'
+      )
     }
   }
 
   const handleGoogleSignUp = async () => {
-    setErrorMessage('')
-
     try {
       const { error } = await signUp.sso({
         strategy: 'oauth_google',
@@ -72,26 +136,38 @@ function SignUp() {
       })
 
       if (error) {
-        console.error(error)
-        setErrorMessage(
-          error.message || 'Unable to continue with Google.'
+        console.error(
+          'Google sign-up error:',
+          JSON.stringify(error, null, 2)
         )
+
+        openAuthModal(
+          'Google sign-up failed',
+          error.message ||
+            'Unable to continue with Google. Please try again.'
+        )
+
+        return
       }
     } catch (error) {
-      console.error(error)
-      setErrorMessage('Unable to continue with Google.')
+      console.error(
+        'Google sign-up exception:',
+        JSON.stringify(error, null, 2)
+      )
+
+      openAuthModal(
+        'Google sign-up failed',
+        'Unable to continue with Google. Please try again.'
+      )
     }
   }
-
-  const isLoading = fetchStatus === 'fetching'
 
   return (
     <AuthLayout>
       <div className="w-full text-white">
-
         {/* Heading */}
         <div>
-          <h1 className=" font-serif text-[32px] font-medium leading-[1.08] tracking-[-0.02em] sm:text-[36px]">
+          <h1 className="font-serif text-[32px] font-medium leading-[1.08] tracking-[-0.02em] sm:text-[36px]">
             Get started with
             <span className="block text-[#ff5a00]">
               Making it yours.
@@ -104,12 +180,16 @@ function SignUp() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="mt-9 space-y-4"
+        <form
+          onSubmit={handleSubmit}
+          className="mt-9 space-y-4"
         >
-
           {/* Email */}
           <div>
-            <label htmlFor="email" className="mb-2 block text-xs font-normal text-white sm:text-sm">
+            <label
+              htmlFor="email"
+              className="mb-2 block text-xs font-normal text-white sm:text-sm"
+            >
               Email address
             </label>
 
@@ -118,7 +198,9 @@ function SignUp() {
               name="email"
               type="email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) =>
+                setEmail(event.target.value)
+              }
               placeholder="you@example.com"
               required
               autoComplete="email"
@@ -145,7 +227,11 @@ function SignUp() {
               <input
                 id="password"
                 name="password"
-                type={showPassword ? 'text' : 'password'}
+                type={
+                  showPassword
+                    ? 'text'
+                    : 'password'
+                }
                 value={password}
                 onChange={(event) =>
                   setPassword(event.target.value)
@@ -159,7 +245,9 @@ function SignUp() {
               <button
                 type="button"
                 onClick={() =>
-                  setShowPassword((current) => !current)
+                  setShowPassword(
+                    (current) => !current
+                  )
                 }
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-gray-700"
                 aria-label={
@@ -168,7 +256,11 @@ function SignUp() {
                     : 'Show password'
                 }
               >
-                {showPassword ? <FiEyeOff /> : <FiEye />}
+                {showPassword ? (
+                  <FiEyeOff />
+                ) : (
+                  <FiEye />
+                )}
               </button>
             </div>
 
@@ -199,7 +291,9 @@ function SignUp() {
                 }
                 value={confirmPassword}
                 onChange={(event) =>
-                  setConfirmPassword(event.target.value)
+                  setConfirmPassword(
+                    event.target.value
+                  )
                 }
                 placeholder="Re-enter password"
                 required
@@ -230,23 +324,20 @@ function SignUp() {
             </div>
           </div>
 
-          {/* Error */}
-          {errorMessage && (
-            <p className="text-sm text-red-400">
-              {errorMessage}
-            </p>
-          )}
-
           {/* Sign Up */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="mt-1 h-14 w-full rounded-md bg-[#ff5a00] text-sm font-medium text-white transition hover:bg-[#e95000] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isLoading
-              ? 'Creating account...'
-              : 'Sign up'}
-          </button>
+          <div className="mt-1 h-12 w-full bg-white p-[2px]">
+            <div className="relative h-full w-full border border-black">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="absolute inset-0 h-full w-full -translate-x-[4px] -translate-y-[4px] bg-[#ff5a00] text-sm font-medium text-white transition-transform duration-200 hover:translate-x-0 hover:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isLoading
+                  ? 'Creating account...'
+                  : 'SIGN UP'}
+              </button>
+            </div>
+          </div>
         </form>
 
         {/* Divider */}
@@ -272,9 +363,7 @@ function SignUp() {
         </button>
 
         {/* Login */}
-        <p
-          className=" mt-5 text-center text-xs text-white sm:text-sm"
-        >
+        <p className="mt-5 text-center text-xs text-white sm:text-sm">
           Already have an account?{' '}
           <Link
             to="/sign-in"
@@ -283,8 +372,16 @@ function SignUp() {
             Sign in
           </Link>
         </p>
-
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModal.isOpen}
+        onClose={closeAuthModal}
+        title={authModal.title}
+        message={authModal.message}
+        type={authModal.type}
+      />
     </AuthLayout>
   )
 }
