@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useSignUp } from '@clerk/react'
 import { useNavigate } from 'react-router'
 
-import AuthLayout from '../components/AuthLayout'
+import SignAuthLayout from '../components/SignAuthLayout'
 import AuthModal from '../components/AuthModal'
 
 function Verify() {
@@ -30,7 +30,11 @@ function Verify() {
 
   const inputRefs = useRef([])
 
-  const openAuthModal = (title, message, type = 'error') => {
+  const openAuthModal = (
+    title,
+    message,
+    type = 'error'
+  ) => {
     setAuthModal({
       isOpen: true,
       title,
@@ -205,15 +209,15 @@ function Verify() {
   }
 
   return (
-    <AuthLayout>
-      <div className="w-full text-white">
+    <SignAuthLayout>
+      <div className="w-full text-black">
         {/* Heading */}
         <div>
           <h1 className="font-serif text-[32px] font-medium leading-[1.05] tracking-[-0.02em] sm:text-[36px]">
             Check Your Email
           </h1>
 
-          <p className="mt-3 text-sm leading-5 text-white/80">
+          <p className="mt-3 text-sm leading-5 text-gray-500">
             Enter the code shared on your email
           </p>
         </div>
@@ -244,7 +248,7 @@ function Verify() {
               aria-label={`Verification code digit ${
                 index + 1
               }`}
-              className="h-12 min-w-0 flex-1 rounded-md border border-white/20 bg-white text-center text-lg text-black outline-none transition focus:border-[#ff5a00] focus:ring-1 focus:ring-[#ff5a00] sm:h-14"
+              className="h-12 min-w-0 flex-1 rounded-md border border-gray-300 bg-white text-center text-lg text-black outline-none transition focus:border-[#ff5a00] focus:ring-1 focus:ring-[#ff5a00] sm:h-14"
             />
           ))}
         </div>
@@ -267,7 +271,7 @@ function Verify() {
 
         {/* Resend */}
         <div className="mt-6 flex items-center justify-between text-sm">
-          <span className="text-white/80">
+          <span className="text-gray-500">
             Didn’t receive code?
           </span>
 
@@ -292,7 +296,7 @@ function Verify() {
         message={authModal.message}
         type={authModal.type}
       />
-    </AuthLayout>
+    </SignAuthLayout>
   )
 }
 
