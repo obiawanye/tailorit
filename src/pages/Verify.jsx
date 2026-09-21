@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useSignUp } from '@clerk/react'
 import { useNavigate } from 'react-router'
 
-import SignAuthLayout from '../components/SignAuthLayout'
+import AuthLayout from '../components/AuthLayout'
 import AuthModal from '../components/AuthModal'
 
 function Verify() {
@@ -209,7 +209,7 @@ function Verify() {
   }
 
   return (
-    <SignAuthLayout>
+    <AuthLayout>
       <div className="w-full text-black">
         {/* Heading */}
         <div>
@@ -296,7 +296,7 @@ function Verify() {
         message={authModal.message}
         type={authModal.type}
       />
-    </SignAuthLayout>
+    </AuthLayout>
   )
 }
 
