@@ -22,10 +22,11 @@ function Verify() {
   const [isResending, setIsResending] = useState(false)
 
   const [authModal, setAuthModal] = useState({
-    isOpen: false,
-    title: '',
-    message: '',
-    type: 'error',
+    isOpen: true,
+    title: 'Verification code sent',
+    message:
+      'We sent a 6-digit verification code to your email.',
+    type: 'success',
   })
 
   const inputRefs = useRef([])
@@ -211,7 +212,6 @@ function Verify() {
   return (
     <AuthLayout>
       <div className="w-full text-black">
-        {/* Heading */}
         <div>
           <h1 className="font-serif text-[32px] font-medium leading-[1.05] tracking-[-0.02em] sm:text-[36px]">
             Check Your Email
@@ -222,7 +222,6 @@ function Verify() {
           </p>
         </div>
 
-        {/* OTP Inputs */}
         <div className="mt-9 flex w-full gap-2 sm:gap-3">
           {otp.map((digit, index) => (
             <input
@@ -253,8 +252,7 @@ function Verify() {
           ))}
         </div>
 
-        {/* Verify Button */}
-        <div className="mt-7 h-12 w-full  p-[2px]">
+        <div className="mt-7 h-12 w-full bg-white p-[2px]">
           <div className="relative h-full w-full border border-black">
             <button
               type="button"
@@ -269,7 +267,6 @@ function Verify() {
           </div>
         </div>
 
-        {/* Resend */}
         <div className="mt-6 flex items-center justify-between text-sm">
           <span className="text-gray-500">
             Didn’t receive code?
@@ -288,7 +285,6 @@ function Verify() {
         </div>
       </div>
 
-      {/* Auth Modal */}
       <AuthModal
         isOpen={authModal.isOpen}
         onClose={closeAuthModal}
