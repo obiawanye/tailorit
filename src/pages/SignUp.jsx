@@ -497,7 +497,7 @@ function SignUp() {
           </div>
 
           {/* Sign Up Button */}
-          <div className="mt-1 h-12 w-full bg-white p-[2px]">
+          <div className="mt-1 h-12 w-full p-[2px]">
             <div className="relative h-full w-full border border-black">
               <button
                 type="submit"

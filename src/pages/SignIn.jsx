@@ -348,7 +348,7 @@ function SignIn() {
           </div>
 
           {/* Sign In Button */}
-          <div className="mt-3 h-12 w-full bg-white p-[2px]">
+          <div className="mt-3 h-12 w-full p-[2px]">
             <div className="relative h-full w-full border border-black">
               <button
                 type="submit"
