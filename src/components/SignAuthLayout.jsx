@@ -1,6 +1,6 @@
 const SignAuthLayout = ({ children }) => {
   return (
-    <main className="relative h-dvh w-full overflow-hidden bg-[#e8ecef]">
+    <main className="relative min-h-dvh w-full overflow-x-hidden overflow-y-auto bg-[#e8ecef]">
       {/* Background image */}
       <div
         className="absolute inset-0 hidden bg-cover bg-center lg:block"
@@ -11,13 +11,15 @@ const SignAuthLayout = ({ children }) => {
       />
 
       {/* Grey auth panel */}
-      <section
-        className="relative z-10 flex h-full w-full items-center bg-[#e8ecef] lg:w-[49%]"
-        style={{
-          clipPath: 'polygon(0 0, 100% 0, 80% 50%, 100% 100%, 0 100%)',
-        }}
-      >
-        <div className="flex h-full w-full flex-col px-8 py-8 sm:px-12 sm:py-10 lg:px-14 xl:px-16">
+      <section className="relative z-10 flex min-h-dvh w-full items-center lg:w-[49%]">
+        {/* Grey panel background */}
+        <div
+          className="absolute inset-0 bg-[#e8ecef] lg:[clip-path:polygon(0_0,100%_0,80%_50%,100%_100%,0_100%)]"
+          aria-hidden="true"
+        />
+
+        {/* Panel content */}
+        <div className="relative z-10 flex min-h-dvh w-full flex-col px-8 py-8 sm:px-12 sm:py-10 lg:px-14 xl:px-16">
           {/* Logo */}
           <div>
             <img

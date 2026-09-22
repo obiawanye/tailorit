@@ -1,6 +1,6 @@
 const AuthLayout = ({ children }) => {
   return (
-    <main className="relative min-h-dvh w-full overflow-x-hidden bg-black">
+    <main className="relative min-h-dvh w-full overflow-x-hidden overflow-y-auto bg-black">
       {/* Background image */}
       <img
         src="/assets/BGAUTH.png"
