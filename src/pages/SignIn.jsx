@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router'
 import { FiEye, FiEyeOff } from 'react-icons/fi'
 import { FcGoogle } from 'react-icons/fc'
 
-import AuthLayout from '../components/AuthLayout'
+import SignAuthLayout from '../components/SignAuthLayout'
 import AuthModal from '../components/AuthModal'
 
 function SignIn() {
@@ -214,7 +214,7 @@ function SignIn() {
   }
 
   return (
-    <AuthLayout>
+    <SignAuthLayout>
       <div className="w-full text-black">
         {/* Heading */}
         <div>
@@ -408,7 +408,7 @@ function SignIn() {
         message={authModal.message}
         type={authModal.type}
       />
-    </AuthLayout>
+    </SignAuthLayout>
   )
 }
 
