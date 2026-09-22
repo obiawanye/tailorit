@@ -535,7 +535,7 @@ function SignUp() {
         </button>
 
         {/* Login */}
-        <p className="mt-3 text-center text-xs text-gray-500 sm:text-sm">
+        <p className="mt-[10px] text-center text-xs text-gray-500 sm:text-sm">
           Already have an account?{' '}
           <Link
             to="/sign-in"

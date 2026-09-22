@@ -212,9 +212,7 @@ export default function Catalog() {
 
   return (
     <main className="min-h-screen bg-white text-black">
-      {/* =========================================
-          NAVBAR
-      ========================================== */}
+      {/* NAVBAR */}
 
       <header className="sticky top-0 z-50 border-b border-[#dddddd] bg-white">
         <nav className="mx-auto flex h-[92px] w-full items-center justify-between px-5 sm:px-8 lg:px-12">
@@ -368,9 +366,7 @@ export default function Catalog() {
         )}
       </header>
 
-      {/* =========================================
-          CATALOG
-      ========================================== */}
+      {/* CATALOG */}
 
       <section className="mx-auto w-full max-w-[1600px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
         {/* HEADING */}
