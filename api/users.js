@@ -1,6 +1,6 @@
 /* global process */
 
-import { createClerkClient } from '@clerk/backend'
+import { createClerkClient, verifyToken } from '@clerk/backend'
 import { db } from './firebaseAdmin.js'
 
 const clerk = createClerkClient({
@@ -25,7 +25,9 @@ export default async function handler(req, res) {
 
     const token = authorization.replace('Bearer ', '')
 
-    const verifiedToken = await clerk.verifyToken(token)
+    const verifiedToken = await verifyToken(token, {
+      secretKey: process.env.CLERK_SECRET_KEY,
+    })
 
     const userId = verifiedToken.sub
 
