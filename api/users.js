@@ -39,6 +39,8 @@ export default async function handler(req, res) {
 
     const user = await clerk.users.getUser(userId)
 
+    
+
     const userRef = db.collection('users').doc(userId)
 
     await userRef.set(

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { useUser } from '@clerk/react'
+import { useAuth, useUser } from '@clerk/react'
 import {
   FiArrowLeft,
   FiArrowRight,
@@ -76,6 +76,7 @@ const getEstimatedDelivery = () => {
 export default function Checkout() {
   const navigate = useNavigate()
   const { user } = useUser()
+  const { getToken } = useAuth()
 
   const [checkoutItems] = useState(getCheckoutItems)
 
@@ -90,6 +91,15 @@ export default function Checkout() {
 
   const [paymentProcessing, setPaymentProcessing] =
     useState(false)
+
+  const [isCreatingOrder, setIsCreatingOrder] =
+    useState(false)
+
+  const [orderError, setOrderError] =
+    useState('')
+
+  const [createdOrder, setCreatedOrder] =
+    useState(null)
 
   const [showSuccessModal, setShowSuccessModal] =
     useState(false)
@@ -200,7 +210,7 @@ export default function Checkout() {
     setShowAddressModal(false)
   }
 
-  const startCheckout = () => {
+  const startCheckout = async () => {
     if (!shippingAddress) {
       openAddressModal()
       return
@@ -210,7 +220,57 @@ export default function Checkout() {
       return
     }
 
-    setShowDemoPayment(true)
+    setOrderError('')
+    setIsCreatingOrder(true)
+
+    try {
+      const token = await getToken()
+
+      if (!token) {
+        throw new Error(
+          'Your session has expired. Please sign in again.',
+        )
+      }
+
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: checkoutItems,
+          shippingAddress,
+          subtotal: baseSubtotal,
+          customizationTotal,
+          deliveryFee,
+          total: finalTotal,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || 'Failed to create order',
+        )
+      }
+
+      setCreatedOrder(data.order)
+      setShowDemoPayment(true)
+    } catch (error) {
+      console.error(
+        'Order creation failed:',
+        error,
+      )
+
+      setOrderError(
+        error.message ||
+          'We could not create your order. Please try again.',
+      )
+    } finally {
+      setIsCreatingOrder(false)
+    }
   }
 
   const completeDemoPayment = () => {
@@ -219,18 +279,22 @@ export default function Checkout() {
     window.setTimeout(() => {
       const now = new Date()
 
-      const demoReference = `TAILORIT-DEMO-${Date.now()}`
+      const demoReference =
+        `TAILORIT-DEMO-${Date.now()}`
 
-      const orderNumber = `TT-${Date.now()
-        .toString()
-        .slice(-8)}`
+      const orderNumber =
+        createdOrder?.orderNumber ||
+        `TT-${Date.now()
+          .toString()
+          .slice(-8)}`
 
       const firstName =
         user?.firstName ||
         shippingAddress?.fullName?.split(' ')[0] ||
         'Customer'
 
-      const orderDate = formatOrderDate(now)
+      const orderDate =
+        formatOrderDate(now)
 
       const estimatedDelivery =
         getEstimatedDelivery()
@@ -269,20 +333,26 @@ export default function Checkout() {
           localStorage.getItem('tailorit-cart') || '[]',
         )
 
-        const purchasedIds = checkoutItems.map(
-          (item) => item.cartId,
-        )
+        const purchasedIds =
+          checkoutItems.map(
+            (item) => item.cartId,
+          )
 
-        const remainingCart = Array.isArray(savedCart)
-          ? savedCart.filter(
-              (item) =>
-                !purchasedIds.includes(item.cartId),
-            )
-          : []
+        const remainingCart =
+          Array.isArray(savedCart)
+            ? savedCart.filter(
+                (item) =>
+                  !purchasedIds.includes(
+                    item.cartId,
+                  ),
+              )
+            : []
 
         localStorage.setItem(
           'tailorit-cart',
-          JSON.stringify(remainingCart),
+          JSON.stringify(
+            remainingCart,
+          ),
         )
       } catch (error) {
         console.error(
@@ -297,13 +367,17 @@ export default function Checkout() {
        * when we build the real order backend.
        */
       try {
-        const existingOrders = JSON.parse(
-          localStorage.getItem('tailorit-orders') || '[]',
-        )
+        const existingOrders =
+          JSON.parse(
+            localStorage.getItem(
+              'tailorit-orders',
+            ) || '[]',
+          )
 
-        const orders = Array.isArray(existingOrders)
-          ? existingOrders
-          : []
+        const orders =
+          Array.isArray(existingOrders)
+            ? existingOrders
+            : []
 
         localStorage.setItem(
           'tailorit-orders',
@@ -321,7 +395,9 @@ export default function Checkout() {
 
       setPaymentProcessing(false)
       setShowDemoPayment(false)
-      setCompletedOrder(completedOrderData)
+      setCompletedOrder(
+        completedOrderData,
+      )
       setShowSuccessModal(true)
     }, 1200)
   }
@@ -435,8 +511,9 @@ export default function Checkout() {
 
                     <p className="whitespace-nowrap text-[20px] font-semibold">
                       {formatPrice(
-                        Number(item.totalPrice || 0) *
-                          quantity,
+                        Number(
+                          item.totalPrice || 0,
+                        ) * quantity,
                       )}
                     </p>
                   </div>
@@ -451,12 +528,16 @@ export default function Checkout() {
                   <span>Subtotal</span>
 
                   <span>
-                    {formatPrice(baseSubtotal)}
+                    {formatPrice(
+                      baseSubtotal,
+                    )}
                   </span>
                 </div>
 
                 <div className="flex justify-between gap-5">
-                  <span>Customization Total</span>
+                  <span>
+                    Customization Total
+                  </span>
 
                   <span>
                     {formatPrice(
@@ -466,10 +547,14 @@ export default function Checkout() {
                 </div>
 
                 <div className="flex justify-between gap-5">
-                  <span>Delivery Fee</span>
+                  <span>
+                    Delivery Fee
+                  </span>
 
                   <span>
-                    {formatPrice(deliveryFee)}
+                    {formatPrice(
+                      deliveryFee,
+                    )}
                   </span>
                 </div>
               </div>
@@ -482,7 +567,9 @@ export default function Checkout() {
                 </span>
 
                 <span className="text-[20px] font-semibold text-[#ff5a00]">
-                  {formatPrice(finalTotal)}
+                  {formatPrice(
+                    finalTotal,
+                  )}
                 </span>
               </div>
             </div>
@@ -586,12 +673,21 @@ export default function Checkout() {
           <button
             type="button"
             onClick={startCheckout}
-            className="flex h-[66px] items-center justify-center gap-8 rounded-[10px] bg-[#ff5a00] text-[19px] font-semibold text-white transition hover:bg-[#e95000]"
+            disabled={isCreatingOrder}
+            className="flex h-[66px] items-center justify-center gap-8 rounded-[10px] bg-[#ff5a00] text-[19px] font-semibold text-white transition hover:bg-[#e95000] disabled:cursor-wait disabled:opacity-60"
           >
-            Checkout With Paystack
+            {isCreatingOrder
+              ? 'Preparing Checkout...'
+              : 'Checkout With Paystack'}
             <FiArrowRight className="h-7 w-7" />
           </button>
         </div>
+
+        {orderError && (
+          <p className="mt-4 text-center text-sm text-red-500">
+            {orderError}
+          </p>
+        )}
       </div>
 
       {/* SHIPPING ADDRESS MODAL */}
