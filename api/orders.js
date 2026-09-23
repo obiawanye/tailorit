@@ -87,7 +87,11 @@ function calculateItemPrice(item) {
 
   const quantity = Number(item?.quantity)
 
-  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
+  if (
+    !Number.isInteger(quantity) ||
+    quantity < 1 ||
+    quantity > 100
+  ) {
     throw new Error('Invalid quantity')
   }
 
@@ -109,10 +113,19 @@ function calculateItemPrice(item) {
       ? customization.color
       : ''
 
-  const pattern =
+  /*
+   * The frontend may call the plain/default pattern
+   * "plain", while the backend stores it as "none".
+   */
+  const rawPattern =
     typeof customization.pattern === 'string'
       ? customization.pattern
       : 'none'
+
+  const pattern =
+    rawPattern === 'plain'
+      ? 'none'
+      : rawPattern
 
   const graphic =
     typeof customization.graphic === 'string'
@@ -163,7 +176,8 @@ function calculateItemPrice(item) {
     product.price +
     customizationPerUnit
 
-  const lineTotal = unitPrice * quantity
+  const lineTotal =
+    unitPrice * quantity
 
   return {
     cartItemId:
@@ -207,7 +221,9 @@ function validateShippingAddress(shippingAddress) {
     !shippingAddress ||
     typeof shippingAddress !== 'object'
   ) {
-    throw new Error('Shipping address is required')
+    throw new Error(
+      'Shipping address is required',
+    )
   }
 
   const requiredFields = [
@@ -250,15 +266,20 @@ export default async function handler(req, res) {
   try {
     // 1. Get Clerk session token
 
-    const authorization = req.headers.authorization
+    const authorization =
+      req.headers.authorization
 
-    if (!authorization?.startsWith('Bearer ')) {
+    if (
+      !authorization?.startsWith('Bearer ')
+    ) {
       return res.status(401).json({
         error: 'Unauthorized',
       })
     }
 
-    const token = authorization.replace('Bearer ', '').trim()
+    const token = authorization
+      .replace('Bearer ', '')
+      .trim()
 
     if (!token) {
       return res.status(401).json({
@@ -268,21 +289,27 @@ export default async function handler(req, res) {
 
     // 2. Verify Clerk session
 
-    const verifiedToken = await verifyToken(token, {
-      secretKey: process.env.CLERK_SECRET_KEY,
-    })
+    const verifiedToken = await verifyToken(
+      token,
+      {
+        secretKey:
+          process.env.CLERK_SECRET_KEY,
+      },
+    )
 
     const userId = verifiedToken.sub
 
     if (!userId) {
       return res.status(401).json({
-        error: 'Invalid authentication token',
+        error:
+          'Invalid authentication token',
       })
     }
 
     // 3. Get authenticated Clerk user
 
-    const user = await clerk.users.getUser(userId)
+    const user =
+      await clerk.users.getUser(userId)
 
     // 4. Get request data
 
@@ -293,15 +320,20 @@ export default async function handler(req, res) {
 
     // 5. Validate items
 
-    if (!Array.isArray(items) || items.length === 0) {
+    if (
+      !Array.isArray(items) ||
+      items.length === 0
+    ) {
       return res.status(400).json({
-        error: 'Order must contain at least one item',
+        error:
+          'Order must contain at least one item',
       })
     }
 
     if (items.length > 50) {
       return res.status(400).json({
-        error: 'Order contains too many items',
+        error:
+          'Order contains too many items',
       })
     }
 
@@ -311,7 +343,9 @@ export default async function handler(req, res) {
 
     try {
       validatedShippingAddress =
-        validateShippingAddress(shippingAddress)
+        validateShippingAddress(
+          shippingAddress,
+        )
     } catch (error) {
       return res.status(400).json({
         error:
@@ -326,7 +360,8 @@ export default async function handler(req, res) {
     let calculatedItems
 
     try {
-      calculatedItems = items.map(calculateItemPrice)
+      calculatedItems =
+        items.map(calculateItemPrice)
     } catch (error) {
       return res.status(400).json({
         error:
@@ -338,32 +373,47 @@ export default async function handler(req, res) {
 
     // 8. Calculate totals
 
-    const baseSubtotal = calculatedItems.reduce(
-      (sum, item) =>
-        sum + item.basePrice * item.quantity,
-      0,
-    )
+    const baseSubtotal =
+      calculatedItems.reduce(
+        (sum, item) =>
+          sum +
+          item.basePrice *
+            item.quantity,
+        0,
+      )
 
     const customizationTotal =
-      calculatedItems.reduce((sum, item) => {
-        const customizationPerUnit =
-          item.customizationPrices.nameText +
-          item.customizationPrices.color +
-          item.customizationPrices.pattern +
-          item.customizationPrices.graphic
+      calculatedItems.reduce(
+        (sum, item) => {
+          const customizationPerUnit =
+            item.customizationPrices
+              .nameText +
+            item.customizationPrices
+              .color +
+            item.customizationPrices
+              .pattern +
+            item.customizationPrices
+              .graphic
 
-        return (
-          sum +
-          customizationPerUnit * item.quantity
-        )
-      }, 0)
+          return (
+            sum +
+            customizationPerUnit *
+              item.quantity
+          )
+        },
+        0,
+      )
 
     const subtotal =
-      baseSubtotal + customizationTotal
+      baseSubtotal +
+      customizationTotal
 
-    const deliveryFee = DELIVERY_FEE
+    const deliveryFee =
+      DELIVERY_FEE
 
-    const total = subtotal + deliveryFee
+    const total =
+      subtotal +
+      deliveryFee
 
     // 9. Generate order number
 
@@ -373,9 +423,11 @@ export default async function handler(req, res) {
 
     // 10. Create Firestore order
 
-    const orderRef = db.collection('orders').doc()
+    const orderRef =
+      db.collection('orders').doc()
 
-    const now = new Date().toISOString()
+    const now =
+      new Date().toISOString()
 
     const orderData = {
       orderNumber,
@@ -383,11 +435,17 @@ export default async function handler(req, res) {
       userId,
 
       customer: {
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
+        firstName:
+          user.firstName || '',
+
+        lastName:
+          user.lastName || '',
+
         email:
-          user.primaryEmailAddress?.emailAddress ||
-          user.emailAddresses?.[0]?.emailAddress ||
+          user.primaryEmailAddress
+            ?.emailAddress ||
+          user.emailAddresses?.[0]
+            ?.emailAddress ||
           '',
       },
 
@@ -438,7 +496,8 @@ export default async function handler(req, res) {
     )
 
     return res.status(500).json({
-      error: 'Failed to create order',
+      error:
+        'Failed to create order',
     })
   }
 }
