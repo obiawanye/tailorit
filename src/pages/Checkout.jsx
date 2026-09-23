@@ -241,18 +241,37 @@ export default function Checkout() {
         body: JSON.stringify({
           items: checkoutItems,
           shippingAddress,
-          subtotal: baseSubtotal,
-          customizationTotal,
-          deliveryFee,
-          total: finalTotal,
         }),
       })
 
-      const data = await response.json()
+      const responseText = await response.text()
+
+      let data = {}
+
+      try {
+        data = responseText
+          ? JSON.parse(responseText)
+          : {}
+      } catch {
+        console.error(
+          'Invalid response from /api/orders:',
+          responseText,
+        )
+
+        throw new Error(
+          `Checkout service returned an invalid response (${response.status}). Please try again.`,
+        )
+      }
 
       if (!response.ok) {
         throw new Error(
           data.error || 'Failed to create order',
+        )
+      }
+
+      if (!data.order) {
+        throw new Error(
+          'Order was created but no order details were returned.',
         )
       }
 
@@ -265,8 +284,9 @@ export default function Checkout() {
       )
 
       setOrderError(
-        error.message ||
-          'We could not create your order. Please try again.',
+        error instanceof Error
+          ? error.message
+          : 'We could not create your order. Please try again.',
       )
     } finally {
       setIsCreatingOrder(false)
@@ -477,6 +497,7 @@ export default function Checkout() {
                 )
 
                 const isCustom =
+                  item.customization?.nameText ||
                   item.customization?.text ||
                   item.customization?.pattern !==
                     'none' ||
@@ -1000,6 +1021,7 @@ export default function Checkout() {
                         )
 
                         const isCustom =
+                          item.customization?.nameText ||
                           item.customization?.text ||
                           item.customization?.pattern !==
                             'none' ||
