@@ -21,6 +21,7 @@ const getCheckoutItems = () => {
     const savedItems = JSON.parse(
       sessionStorage.getItem('tailorit-checkout-items') || '[]',
     )
+
     return Array.isArray(savedItems) ? savedItems : []
   } catch (error) {
     console.error('Failed to load checkout items:', error)
@@ -33,6 +34,7 @@ const getSavedAddress = () => {
     const savedAddress = JSON.parse(
       localStorage.getItem('tailorit-shipping-address') || 'null',
     )
+
     return savedAddress
   } catch (error) {
     console.error('Failed to load shipping address:', error)
@@ -68,9 +70,6 @@ export default function Checkout() {
 
   const [isCreatingOrder, setIsCreatingOrder] =
     useState(false)
-
-  const [createdOrder, setCreatedOrder] =
-    useState(null)
 
   const [showSuccessModal, setShowSuccessModal] =
     useState(false)
@@ -278,8 +277,6 @@ export default function Checkout() {
 
       const order = orderData.order
 
-      setCreatedOrder(order)
-
       const initializeResponse = await fetch(
         '/api/paystack-initialize',
         {
@@ -330,11 +327,6 @@ export default function Checkout() {
         )
       }
 
-      setCreatedOrder({
-        ...order,
-        paymentReference,
-      })
-
       const paystack = new PaystackPop()
 
       paystack.resumeTransaction(
@@ -353,6 +345,7 @@ export default function Checkout() {
             await handlePaystackSuccess(
               transaction?.reference ||
                 paymentReference,
+              order,
             )
           },
 
@@ -398,7 +391,10 @@ export default function Checkout() {
     }
   }
 
-  const handlePaystackSuccess = async (reference) => {
+  const handlePaystackSuccess = async (
+    reference,
+    order,
+  ) => {
     if (!reference) {
       setPaymentProcessing(false)
 
@@ -409,7 +405,7 @@ export default function Checkout() {
       return
     }
 
-    if (!createdOrder?.id) {
+    if (!order?.id) {
       setPaymentProcessing(false)
 
       setPaymentError(
@@ -443,11 +439,8 @@ export default function Checkout() {
             },
 
             body: JSON.stringify({
-              orderId:
-                createdOrder.id,
-
-              paymentReference:
-                reference,
+              orderId: order.id,
+              paymentReference: reference,
             }),
           },
         )
@@ -621,7 +614,6 @@ export default function Checkout() {
 
       setPaymentProcessing(false)
       setIsCreatingOrder(false)
-      setCreatedOrder(null)
 
       setCompletedOrder(
         completedOrderData,
