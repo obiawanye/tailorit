@@ -1,6 +1,9 @@
-/* global process */
+ /* global process */
 
-import { createClerkClient, verifyToken } from '@clerk/backend'
+import {
+  createClerkClient,
+  verifyToken,
+} from '@clerk/backend'
 import { db } from './firebaseAdmin.js'
 
 const clerk = createClerkClient({
@@ -22,26 +25,31 @@ const PRODUCTS = {
     price: 800,
     image: '/assets/Catalog/catalog-laptop.png',
   },
+
   2: {
     name: 'CROSSBODY PHONE CASE',
     price: 800,
     image: '/assets/Catalog/catalog-phone-case.png',
   },
+
   3: {
     name: 'OLIVE CANVAS DUFFEL BAG',
     price: 800,
     image: '/assets/Catalog/catalog-olive-duffel.png',
   },
+
   4: {
     name: 'CLASSIC LOW-TOP SNEAKERS',
     price: 800,
     image: '/assets/Catalog/catalog-sneaker.png',
   },
+
   5: {
     name: 'TAILORIT EXCLUSIVE TRAVEL BAG',
     price: 900,
     image: '/assets/Catalog/catalog-black-orange-bag.png',
   },
+
   6: {
     name: 'CREASED BLACK EFFECT SHIRT',
     price: 800,
@@ -116,7 +124,10 @@ function normalizePattern(pattern) {
 }
 
 function calculateItemPrice(item) {
-  const productId = Number(item?.productId)
+  const productId = Number(
+    item?.productId,
+  )
+
   const product = PRODUCTS[productId]
 
   if (!product) {
@@ -125,7 +136,9 @@ function calculateItemPrice(item) {
     )
   }
 
-  const quantity = Number(item?.quantity)
+  const quantity = Number(
+    item?.quantity,
+  )
 
   if (
     !Number.isInteger(quantity) ||
@@ -139,26 +152,31 @@ function calculateItemPrice(item) {
 
   const customization =
     item?.customization &&
-    typeof item.customization === 'object'
+    typeof item.customization ===
+      'object'
       ? item.customization
       : {}
 
   const nameText =
-    typeof customization.nameText === 'string'
+    typeof customization.nameText ===
+      'string'
       ? customization.nameText.trim()
-      : typeof customization.text === 'string'
+      : typeof customization.text ===
+          'string'
         ? customization.text.trim()
         : ''
 
   const color =
-    typeof customization.color === 'string'
+    typeof customization.color ===
+      'string'
       ? customization.color
           .trim()
           .toLowerCase()
       : ''
 
   const rawPattern =
-    typeof customization.pattern === 'string'
+    typeof customization.pattern ===
+      'string'
       ? customization.pattern
           .trim()
           .toLowerCase()
@@ -168,13 +186,17 @@ function calculateItemPrice(item) {
     normalizePattern(rawPattern)
 
   const graphic =
-    typeof customization.graphic === 'string'
+    typeof customization.graphic ===
+      'string'
       ? customization.graphic
           .trim()
           .toLowerCase()
       : 'none'
 
-  if (nameText.length > MAX_TEXT_LENGTH) {
+  if (
+    nameText.length >
+    MAX_TEXT_LENGTH
+  ) {
     throw new Error(
       `Custom text cannot exceed ${MAX_TEXT_LENGTH} characters`,
     )
@@ -230,7 +252,8 @@ function calculateItemPrice(item) {
 
   return {
     cartItemId:
-      typeof item?.cartItemId === 'string'
+      typeof item?.cartItemId ===
+      'string'
         ? item.cartItemId
         : `${productId}-${Date.now()}`,
 
@@ -246,16 +269,23 @@ function calculateItemPrice(item) {
 
     customization: {
       nameText,
+
       text: nameText,
+
       color,
+
       pattern,
+
       graphic,
     },
 
     customizationPrices: {
       nameText: nameTextPrice,
+
       color: colorPrice,
+
       pattern: patternPrice,
+
       graphic: graphicPrice,
     },
 
@@ -272,7 +302,8 @@ function validateShippingAddress(
 ) {
   if (
     !shippingAddress ||
-    typeof shippingAddress !== 'object'
+    typeof shippingAddress !==
+      'object'
   ) {
     throw new Error(
       'Shipping address is required',
@@ -290,9 +321,12 @@ function validateShippingAddress(
 
   for (const field of requiredFields) {
     if (
-      typeof shippingAddress[field] !==
-        'string' ||
-      !shippingAddress[field].trim()
+      typeof shippingAddress[
+        field
+      ] !== 'string' ||
+      !shippingAddress[
+        field
+      ].trim()
     ) {
       throw new Error(
         `Shipping address field "${field}" is required`,
@@ -321,12 +355,16 @@ function validateShippingAddress(
   }
 }
 
-async function authenticateRequest(req) {
+async function authenticateRequest(
+  req,
+) {
   const authorization =
     req.headers.authorization
 
   if (
-    !authorization?.startsWith('Bearer ')
+    !authorization?.startsWith(
+      'Bearer ',
+    )
   ) {
     throw new Error('Unauthorized')
   }
@@ -357,19 +395,78 @@ async function authenticateRequest(req) {
   return userId
 }
 
-async function getUserOrders(userId) {
+async function getUserOrders(
+  userId,
+) {
   const snapshot =
     await db
       .collection('orders')
-      .where('userId', '==', userId)
+      .where(
+        'userId',
+        '==',
+        userId,
+      )
       .get()
 
-  const orders = snapshot.docs.map(
-    (document) => ({
+  const now = new Date()
+
+  const orders = []
+
+  for (const document of snapshot.docs) {
+    const order = {
       id: document.id,
       ...document.data(),
-    }),
-  )
+    }
+
+    /*
+     * There is intentionally no cron job
+     * required for this demo.
+     *
+     * When the user requests their orders,
+     * we check whether a shipped order has
+     * reached its delivery date.
+     *
+     * If it has, Firestore is updated to
+     * delivered immediately.
+     */
+    if (
+      order.status === 'shipped' &&
+      order.deliveryDate
+    ) {
+      const deliveryDate =
+        new Date(
+          order.deliveryDate,
+        )
+
+      if (
+        !Number.isNaN(
+          deliveryDate.getTime(),
+        ) &&
+        now >= deliveryDate
+      ) {
+        const deliveredAt =
+          now.toISOString()
+
+        await document.ref.update({
+          status: 'delivered',
+
+          deliveredAt,
+
+          updatedAt: deliveredAt,
+        })
+
+        order.status = 'delivered'
+
+        order.deliveredAt =
+          deliveredAt
+
+        order.updatedAt =
+          deliveredAt
+      }
+    }
+
+    orders.push(order)
+  }
 
   orders.sort((a, b) => {
     const dateA = new Date(
@@ -392,7 +489,9 @@ async function createOrder(
   userId,
 ) {
   const user =
-    await clerk.users.getUser(userId)
+    await clerk.users.getUser(
+      userId,
+    )
 
   const {
     items,
@@ -436,7 +535,9 @@ async function createOrder(
 
   try {
     calculatedItems =
-      items.map(calculateItemPrice)
+      items.map(
+        calculateItemPrice,
+      )
   } catch (error) {
     console.error(
       'ORDER ITEM VALIDATION ERROR:',
@@ -450,6 +551,14 @@ async function createOrder(
           : 'Invalid order item',
     })
   }
+
+  /*
+   * IMPORTANT:
+   *
+   * We calculate all prices on the
+   * server instead of trusting the
+   * prices sent by the browser.
+   */
 
   const baseSubtotal =
     calculatedItems.reduce(
@@ -524,7 +633,8 @@ async function createOrder(
         '',
     },
 
-    items: calculatedItems,
+    items:
+      calculatedItems,
 
     shippingAddress:
       validatedShippingAddress,
@@ -541,6 +651,13 @@ async function createOrder(
 
     currency: 'NGN',
 
+    /*
+     * New orders begin here.
+     *
+     * Payment changes this to:
+     * paymentStatus = paid
+     * status = shipped
+     */
     status: 'pending',
 
     paymentStatus: 'unpaid',
@@ -552,13 +669,16 @@ async function createOrder(
     updatedAt: now,
   }
 
-  await orderRef.set(orderData)
+  await orderRef.set(
+    orderData,
+  )
 
   return res.status(201).json({
     success: true,
 
     order: {
       id: orderRef.id,
+
       ...orderData,
     },
   })
@@ -570,18 +690,34 @@ export default async function handler(
 ) {
   try {
     const userId =
-      await authenticateRequest(req)
+      await authenticateRequest(
+        req,
+      )
 
+    /*
+     * GET /api/orders
+     *
+     * Used by MyOrders.jsx.
+     */
     if (req.method === 'GET') {
       const orders =
-        await getUserOrders(userId)
+        await getUserOrders(
+          userId,
+        )
 
       return res.status(200).json({
         success: true,
+
         orders,
       })
     }
 
+    /*
+     * POST /api/orders
+     *
+     * Creates a new pending order
+     * before payment.
+     */
     if (req.method === 'POST') {
       return await createOrder(
         req,
@@ -591,7 +727,8 @@ export default async function handler(
     }
 
     return res.status(405).json({
-      error: 'Method not allowed',
+      error:
+        'Method not allowed',
     })
   } catch (error) {
     console.error(
@@ -601,7 +738,8 @@ export default async function handler(
 
     if (
       error instanceof Error &&
-      error.message === 'Unauthorized'
+      error.message ===
+        'Unauthorized'
     ) {
       return res.status(401).json({
         error: 'Unauthorized',

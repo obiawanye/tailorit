@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useAuth, useUser } from '@clerk/react'
+import PaystackPop from '@paystack/inline-js'
 import {
   FiArrowLeft,
   FiArrowRight,
@@ -20,7 +21,6 @@ const getCheckoutItems = () => {
     const savedItems = JSON.parse(
       sessionStorage.getItem('tailorit-checkout-items') || '[]',
     )
-
     return Array.isArray(savedItems) ? savedItems : []
   } catch (error) {
     console.error('Failed to load checkout items:', error)
@@ -33,7 +33,6 @@ const getSavedAddress = () => {
     const savedAddress = JSON.parse(
       localStorage.getItem('tailorit-shipping-address') || 'null',
     )
-
     return savedAddress
   } catch (error) {
     console.error('Failed to load shipping address:', error)
@@ -51,28 +50,6 @@ const formatOrderDate = (date) => {
   })
 }
 
-const getEstimatedDelivery = () => {
-  const startDate = new Date()
-  const endDate = new Date()
-
-  startDate.setDate(startDate.getDate() + 7)
-  endDate.setDate(endDate.getDate() + 10)
-
-  const start = startDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-
-  const end = endDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-
-  return `${start} - ${end}`
-}
-
 export default function Checkout() {
   const navigate = useNavigate()
   const { user } = useUser()
@@ -86,17 +63,11 @@ export default function Checkout() {
   const [showAddressModal, setShowAddressModal] =
     useState(false)
 
-  const [showDemoPayment, setShowDemoPayment] =
-    useState(false)
-
   const [paymentProcessing, setPaymentProcessing] =
     useState(false)
 
   const [isCreatingOrder, setIsCreatingOrder] =
     useState(false)
-
-  const [orderError, setOrderError] =
-    useState('')
 
   const [createdOrder, setCreatedOrder] =
     useState(null)
@@ -106,6 +77,9 @@ export default function Checkout() {
 
   const [completedOrder, setCompletedOrder] =
     useState(null)
+
+  const [paymentError, setPaymentError] =
+    useState('')
 
   const [addressForm, setAddressForm] = useState(() => {
     const savedAddress = getSavedAddress()
@@ -133,7 +107,9 @@ export default function Checkout() {
 
   const customizationTotal = checkoutItems.reduce(
     (sum, item) => {
-      const quantity = Number(item.quantity || 1)
+      const quantity = Number(
+        item.quantity || 1,
+      )
 
       const customizationPrice =
         Number(item.totalPrice || 0) -
@@ -141,7 +117,8 @@ export default function Checkout() {
 
       return (
         sum +
-        Math.max(customizationPrice, 0) * quantity
+        Math.max(customizationPrice, 0) *
+          quantity
       )
     },
     0,
@@ -169,12 +146,19 @@ export default function Checkout() {
 
   const openAddressModal = () => {
     setAddressForm({
-      fullName: shippingAddress?.fullName || '',
-      phone: shippingAddress?.phone || '',
-      street: shippingAddress?.street || '',
-      city: shippingAddress?.city || '',
-      state: shippingAddress?.state || '',
-      country: shippingAddress?.country || 'Nigeria',
+      fullName:
+        shippingAddress?.fullName || '',
+      phone:
+        shippingAddress?.phone || '',
+      street:
+        shippingAddress?.street || '',
+      city:
+        shippingAddress?.city || '',
+      state:
+        shippingAddress?.state || '',
+      country:
+        shippingAddress?.country ||
+        'Nigeria',
     })
 
     setShowAddressModal(true)
@@ -184,12 +168,23 @@ export default function Checkout() {
     event.preventDefault()
 
     const cleanedAddress = {
-      fullName: addressForm.fullName.trim(),
-      phone: addressForm.phone.trim(),
-      street: addressForm.street.trim(),
-      city: addressForm.city.trim(),
-      state: addressForm.state.trim(),
-      country: addressForm.country.trim(),
+      fullName:
+        addressForm.fullName.trim(),
+
+      phone:
+        addressForm.phone.trim(),
+
+      street:
+        addressForm.street.trim(),
+
+      city:
+        addressForm.city.trim(),
+
+      state:
+        addressForm.state.trim(),
+
+      country:
+        addressForm.country.trim(),
     }
 
     const hasEmptyField = Object.values(
@@ -200,11 +195,15 @@ export default function Checkout() {
       return
     }
 
-    setShippingAddress(cleanedAddress)
+    setShippingAddress(
+      cleanedAddress,
+    )
 
     localStorage.setItem(
       'tailorit-shipping-address',
-      JSON.stringify(cleanedAddress),
+      JSON.stringify(
+        cleanedAddress,
+      ),
     )
 
     setShowAddressModal(false)
@@ -220,7 +219,7 @@ export default function Checkout() {
       return
     }
 
-    setOrderError('')
+    setPaymentError('')
     setIsCreatingOrder(true)
 
     try {
@@ -232,138 +231,322 @@ export default function Checkout() {
         )
       }
 
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const orderResponse = await fetch(
+        '/api/orders',
+        {
+          method: 'POST',
+
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify({
+            items: checkoutItems,
+            shippingAddress,
+          }),
         },
-        body: JSON.stringify({
-          items: checkoutItems,
-          shippingAddress,
-        }),
-      })
+      )
 
-      const responseText = await response.text()
+      const responseText =
+        await orderResponse.text()
 
-      let data = {}
+      let orderData = {}
 
       try {
-        data = responseText
+        orderData = responseText
           ? JSON.parse(responseText)
           : {}
       } catch {
-        console.error(
-          'Invalid response from /api/orders:',
-          responseText,
-        )
-
         throw new Error(
-          `Checkout service returned an invalid response (${response.status}). Please try again.`,
+          `Checkout service returned an invalid response (${orderResponse.status}). Please try again.`,
         )
       }
 
-      if (!response.ok) {
+      if (!orderResponse.ok) {
         throw new Error(
-          data.error || 'Failed to create order',
+          orderData.error ||
+            'Failed to create your order.',
         )
       }
 
-      if (!data.order) {
+      if (!orderData.order?.id) {
         throw new Error(
-          'Order was created but no order details were returned.',
+          'The order was created but no order ID was returned.',
         )
       }
 
-      setCreatedOrder(data.order)
-      setShowDemoPayment(true)
+      const order = orderData.order
+
+      setCreatedOrder(order)
+
+      const initializeResponse = await fetch(
+        '/api/paystack-initialize',
+        {
+          method: 'POST',
+
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify({
+            orderId: order.id,
+          }),
+        },
+      )
+
+      const initializeText =
+        await initializeResponse.text()
+
+      let initializeData = {}
+
+      try {
+        initializeData = initializeText
+          ? JSON.parse(initializeText)
+          : {}
+      } catch {
+        throw new Error(
+          `Paystack initialization returned an invalid response (${initializeResponse.status}). Please try again.`,
+        )
+      }
+
+      if (!initializeResponse.ok) {
+        throw new Error(
+          initializeData.error ||
+            'Paystack could not initialize your payment.',
+        )
+      }
+
+      const accessCode =
+        initializeData.payment?.accessCode
+
+      const paymentReference =
+        initializeData.payment?.reference
+
+      if (!accessCode || !paymentReference) {
+        throw new Error(
+          'Paystack did not return a valid payment session.',
+        )
+      }
+
+      setCreatedOrder({
+        ...order,
+        paymentReference,
+      })
+
+      const paystack = new PaystackPop()
+
+      paystack.resumeTransaction(
+        accessCode,
+        {
+          onLoad: () => {
+            setIsCreatingOrder(false)
+            setPaymentProcessing(true)
+
+            console.log(
+              'Paystack checkout loaded successfully.',
+            )
+          },
+
+          onSuccess: async (transaction) => {
+            await handlePaystackSuccess(
+              transaction?.reference ||
+                paymentReference,
+            )
+          },
+
+          onCancel: () => {
+            setIsCreatingOrder(false)
+            setPaymentProcessing(false)
+
+            setPaymentError(
+              'Payment was cancelled. Your order is still pending and can be paid again.',
+            )
+          },
+
+          onError: (error) => {
+            console.error(
+              'Paystack popup error:',
+              error,
+            )
+
+            setIsCreatingOrder(false)
+            setPaymentProcessing(false)
+
+            setPaymentError(
+              error?.message ||
+                'Paystack could not load the payment checkout.',
+            )
+          },
+        },
+      )
     } catch (error) {
       console.error(
-        'Order creation failed:',
+        'Checkout/Paystack initialization error:',
         error,
       )
 
-      setOrderError(
+      setIsCreatingOrder(false)
+      setPaymentProcessing(false)
+
+      setPaymentError(
         error instanceof Error
           ? error.message
-          : 'We could not create your order. Please try again.',
+          : 'Something went wrong while starting your payment.',
       )
-    } finally {
-      setIsCreatingOrder(false)
     }
   }
 
-  const completeDemoPayment = () => {
+  const handlePaystackSuccess = async (reference) => {
+    if (!reference) {
+      setPaymentProcessing(false)
+
+      setPaymentError(
+        'Paystack reported success, but no payment reference was returned.',
+      )
+
+      return
+    }
+
+    if (!createdOrder?.id) {
+      setPaymentProcessing(false)
+
+      setPaymentError(
+        'Payment succeeded, but the TailorIt order could not be found. Please contact support with your Paystack reference.',
+      )
+
+      return
+    }
+
     setPaymentProcessing(true)
+    setPaymentError('')
 
-    window.setTimeout(() => {
-      const now = new Date()
+    try {
+      const token = await getToken()
 
-      const demoReference =
-        `TAILORIT-DEMO-${Date.now()}`
+      if (!token) {
+        throw new Error(
+          'Your session has expired. Please sign in again.',
+        )
+      }
 
-      const orderNumber =
-        createdOrder?.orderNumber ||
-        `TT-${Date.now()
-          .toString()
-          .slice(-8)}`
+      const paymentResponse =
+        await fetch(
+          '/api/order-payment',
+          {
+            method: 'POST',
 
-      const firstName =
-        user?.firstName ||
-        shippingAddress?.fullName?.split(' ')[0] ||
-        'Customer'
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
 
-      const orderDate =
-        formatOrderDate(now)
+            body: JSON.stringify({
+              orderId:
+                createdOrder.id,
+
+              paymentReference:
+                reference,
+            }),
+          },
+        )
+
+      const paymentText =
+        await paymentResponse.text()
+
+      let paymentData = {}
+
+      try {
+        paymentData = paymentText
+          ? JSON.parse(paymentText)
+          : {}
+      } catch {
+        throw new Error(
+          `Payment verification returned an invalid response (${paymentResponse.status}). Please try again.`,
+        )
+      }
+
+      if (!paymentResponse.ok) {
+        throw new Error(
+          paymentData.error ||
+            'Paystack payment could not be verified.',
+        )
+      }
+
+      const paidOrder =
+        paymentData.order
+
+      if (!paidOrder) {
+        throw new Error(
+          'Payment was verified but the updated order was not returned.',
+        )
+      }
+
+      const deliveryDate =
+        paidOrder.deliveryDate
+          ? new Date(
+              paidOrder.deliveryDate,
+            )
+          : null
 
       const estimatedDelivery =
-        getEstimatedDelivery()
-
-      const completedOrderData = {
-        orderNumber,
-        orderDate,
-        estimatedDelivery,
-        firstName,
-        items: checkoutItems,
-        subtotal: baseSubtotal,
-        customizationTotal,
-        deliveryFee,
-        total: finalTotal,
-        paymentReference: demoReference,
-        shippingAddress,
-      }
+        deliveryDate &&
+        !Number.isNaN(
+          deliveryDate.getTime(),
+        )
+          ? deliveryDate.toLocaleDateString(
+              'en-US',
+              {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              },
+            )
+          : '7 days'
 
       sessionStorage.setItem(
         'tailorit-demo-payment',
         JSON.stringify({
-          reference: demoReference,
-          amount: finalTotal,
+          reference:
+            paidOrder.paymentReference,
+
+          amount:
+            paidOrder.total,
+
           status: 'success',
-          createdAt: now.toISOString(),
+
+          createdAt:
+            paidOrder.paidAt,
         }),
       )
 
-      /*
-       * Remove only the products that were checked out.
-       * Any products that were left unselected in the Cart
-       * remain in localStorage.
-       */
       try {
-        const savedCart = JSON.parse(
-          localStorage.getItem('tailorit-cart') || '[]',
-        )
+        const savedCart =
+          JSON.parse(
+            localStorage.getItem(
+              'tailorit-cart',
+            ) || '[]',
+          )
 
         const purchasedIds =
-          checkoutItems.map(
-            (item) => item.cartId,
+          new Set(
+            checkoutItems
+              .map(
+                (item) =>
+                  item.cartId ||
+                  item.cartItemId,
+              )
+              .filter(Boolean),
           )
 
         const remainingCart =
           Array.isArray(savedCart)
             ? savedCart.filter(
                 (item) =>
-                  !purchasedIds.includes(
-                    item.cartId,
+                  !purchasedIds.has(
+                    item.cartId ||
+                      item.cartItemId,
                   ),
               )
             : []
@@ -381,45 +564,85 @@ export default function Checkout() {
         )
       }
 
-      /*
-       * Save the completed order locally for now.
-       * This can later be replaced with Firestore
-       * when we build the real order backend.
-       */
-      try {
-        const existingOrders =
-          JSON.parse(
-            localStorage.getItem(
-              'tailorit-orders',
-            ) || '[]',
-          )
+      const orderDate =
+        paidOrder.createdAt
+          ? formatOrderDate(
+              new Date(
+                paidOrder.createdAt,
+              ),
+            )
+          : formatOrderDate(
+              new Date(),
+            )
 
-        const orders =
-          Array.isArray(existingOrders)
-            ? existingOrders
-            : []
+      const firstName =
+        paidOrder.customer
+          ?.firstName ||
+        user?.firstName ||
+        shippingAddress?.fullName?.split(
+          ' ',
+        )[0] ||
+        'Customer'
 
-        localStorage.setItem(
-          'tailorit-orders',
-          JSON.stringify([
-            completedOrderData,
-            ...orders,
-          ]),
-        )
-      } catch (error) {
-        console.error(
-          'Failed to save order history:',
-          error,
-        )
+      const completedOrderData = {
+        ...paidOrder,
+
+        orderNumber:
+          paidOrder.orderNumber,
+
+        orderDate,
+
+        estimatedDelivery,
+
+        firstName,
+
+        items:
+          paidOrder.items,
+
+        subtotal:
+          paidOrder.subtotal,
+
+        customizationTotal:
+          paidOrder.customizationTotal,
+
+        deliveryFee:
+          paidOrder.deliveryFee,
+
+        total:
+          paidOrder.total,
+
+        paymentReference:
+          paidOrder.paymentReference,
+
+        shippingAddress:
+          paidOrder.shippingAddress ||
+          shippingAddress,
       }
 
       setPaymentProcessing(false)
-      setShowDemoPayment(false)
+      setIsCreatingOrder(false)
+      setCreatedOrder(null)
+
       setCompletedOrder(
         completedOrderData,
       )
+
       setShowSuccessModal(true)
-    }, 1200)
+    } catch (error) {
+      console.error(
+        'Paystack payment verification error:',
+        error,
+      )
+
+      setPaymentProcessing(false)
+      setIsCreatingOrder(false)
+
+      setPaymentError(
+        error instanceof Error
+          ? error.message
+          : 'Something went wrong while verifying your Paystack payment.',
+      )
+    }
   }
 
   const finishDemoOrder = () => {
@@ -477,76 +700,101 @@ export default function Checkout() {
   return (
     <main className="min-h-screen bg-white px-6 py-14 text-black md:px-10 lg:px-16">
       <div className="mx-auto w-full max-w-[1450px]">
-        {/* PAGE TITLE */}
         <h1 className="mb-12 text-[40px] font-bold tracking-[-1px]">
           Checkout
         </h1>
 
-        {/* ORDER SUMMARY */}
         <section className="rounded-[10px] border border-[#d8d8d8] p-6">
           <h2 className="mb-5 text-[20px] font-bold">
             Order Summary
           </h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px]">
-            {/* PRODUCTS */}
             <div className="space-y-7 lg:pr-10">
-              {checkoutItems.map((item) => {
-                const quantity = Number(
-                  item.quantity || 1,
-                )
+              {checkoutItems.map(
+                (item) => {
+                  const quantity =
+                    Number(
+                      item.quantity ||
+                        1,
+                    )
 
-                const isCustom =
-                  item.customization?.nameText ||
-                  item.customization?.text ||
-                  item.customization?.pattern !==
-                    'none' ||
-                  item.customization?.graphic !==
-                    'none'
+                  const isCustom =
+                    Boolean(
+                      item.customization
+                        ?.nameText ||
+                        item.customization
+                          ?.text ||
+                        (
+                          item
+                            .customization
+                            ?.pattern !==
+                          'none'
+                        ) ||
+                        (
+                          item
+                            .customization
+                            ?.graphic !==
+                          'none'
+                        ),
+                    )
 
-                return (
-                  <div
-                    key={item.cartId}
-                    className="flex items-center gap-7"
-                  >
-                    <div className="flex h-[82px] w-[82px] shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-[#eeeeee]">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="h-full w-full object-contain"
-                      />
-                    </div>
+                  return (
+                    <div
+                      key={
+                        item.cartId ||
+                        item.cartItemId ||
+                        item.productId
+                      }
+                      className="flex items-center gap-7"
+                    >
+                      <div className="flex h-[82px] w-[82px] shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-[#eeeeee]">
+                        <img
+                          src={item.image}
+                          alt={
+                            item.name
+                          }
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
 
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-[19px] font-semibold">
-                        {item.name}
-                        {isCustom
-                          ? ' (Custom)'
-                          : ' (Plain)'}
-                      </h3>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-[19px] font-semibold">
+                          {item.name}
 
-                      <p className="mt-1 text-[15px] text-gray-600">
-                        Qty: {quantity}
+                          {isCustom
+                            ? ' (Custom)'
+                            : ' (Plain)'}
+                        </h3>
+
+                        <p className="mt-1 text-[15px] text-gray-600">
+                          Qty:{' '}
+                          {quantity}
+                        </p>
+                      </div>
+
+                      <p className="whitespace-nowrap text-[20px] font-semibold">
+                        {formatPrice(
+                          Number(
+                            item.totalPrice ||
+                              item.unitPrice ||
+                              0,
+                          ) *
+                            quantity,
+                        )}
                       </p>
                     </div>
-
-                    <p className="whitespace-nowrap text-[20px] font-semibold">
-                      {formatPrice(
-                        Number(
-                          item.totalPrice || 0,
-                        ) * quantity,
-                      )}
-                    </p>
-                  </div>
-                )
-              })}
+                  )
+                },
+              )}
             </div>
 
-            {/* TOTAL BREAKDOWN */}
             <div className="mt-8 border-t border-[#dddddd] pt-8 lg:mt-0 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-8">
               <div className="space-y-7 text-[17px] text-gray-600">
                 <div className="flex justify-between gap-5">
-                  <span>Subtotal</span>
+                  <span>
+                    Subtotal
+                  </span>
 
                   <span>
                     {formatPrice(
@@ -597,9 +845,7 @@ export default function Checkout() {
           </div>
         </section>
 
-        {/* PAYMENT + SHIPPING */}
         <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* PAYMENT METHOD */}
           <section className="rounded-[10px] border border-[#d8d8d8] p-5">
             <h2 className="mb-6 text-[26px] font-semibold">
               Payment Method
@@ -624,7 +870,6 @@ export default function Checkout() {
             </div>
           </section>
 
-          {/* SHIPPING ADDRESS */}
           <section className="rounded-[10px] border border-[#d8d8d8] p-5">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-[26px] font-semibold">
@@ -633,7 +878,9 @@ export default function Checkout() {
 
               <button
                 type="button"
-                onClick={openAddressModal}
+                onClick={
+                  openAddressModal
+                }
                 aria-label="Add shipping address"
                 className="text-[#ff5a00]"
               >
@@ -644,7 +891,9 @@ export default function Checkout() {
             {shippingAddress ? (
               <button
                 type="button"
-                onClick={openAddressModal}
+                onClick={
+                  openAddressModal
+                }
                 className="flex min-h-[105px] w-full items-center justify-between rounded-[10px] border border-[#bdbdbd] px-5 text-left"
               >
                 <div className="flex items-center gap-5">
@@ -658,10 +907,21 @@ export default function Checkout() {
                     </p>
 
                     <p className="mt-2 max-w-[390px] text-[16px] leading-5">
-                      {shippingAddress.street},{' '}
-                      {shippingAddress.city},{' '}
-                      {shippingAddress.state},{' '}
-                      {shippingAddress.country}
+                      {
+                        shippingAddress.street
+                      }
+                      ,{' '}
+                      {
+                        shippingAddress.city
+                      }
+                      ,{' '}
+                      {
+                        shippingAddress.state
+                      }
+                      ,{' '}
+                      {
+                        shippingAddress.country
+                      }
                     </p>
                   </div>
                 </div>
@@ -671,7 +931,9 @@ export default function Checkout() {
             ) : (
               <button
                 type="button"
-                onClick={openAddressModal}
+                onClick={
+                  openAddressModal
+                }
                 className="flex min-h-[105px] w-full items-center justify-center gap-3 rounded-[10px] border border-dashed border-[#bdbdbd] text-gray-500 transition hover:border-[#ff5a00] hover:text-[#ff5a00]"
               >
                 <FiPlus />
@@ -681,7 +943,12 @@ export default function Checkout() {
           </section>
         </div>
 
-        {/* BOTTOM BUTTONS */}
+        {paymentError && (
+          <div className="mt-6 rounded-[10px] border border-red-200 bg-red-50 px-5 py-4 text-sm leading-6 text-red-600">
+            {paymentError}
+          </div>
+        )}
+
         <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Link
             to="/cart"
@@ -693,25 +960,26 @@ export default function Checkout() {
 
           <button
             type="button"
-            onClick={startCheckout}
-            disabled={isCreatingOrder}
+            onClick={
+              startCheckout
+            }
+            disabled={
+              isCreatingOrder ||
+              paymentProcessing
+            }
             className="flex h-[66px] items-center justify-center gap-8 rounded-[10px] bg-[#ff5a00] text-[19px] font-semibold text-white transition hover:bg-[#e95000] disabled:cursor-wait disabled:opacity-60"
           >
             {isCreatingOrder
               ? 'Preparing Checkout...'
-              : 'Checkout With Paystack'}
+              : paymentProcessing
+                ? 'Processing Payment...'
+                : 'Checkout With Paystack'}
+
             <FiArrowRight className="h-7 w-7" />
           </button>
         </div>
-
-        {orderError && (
-          <p className="mt-4 text-center text-sm text-red-500">
-            {orderError}
-          </p>
-        )}
       </div>
 
-      {/* SHIPPING ADDRESS MODAL */}
       {showAddressModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 px-5">
           <div className="max-h-[90vh] w-full max-w-[620px] overflow-y-auto rounded-[16px] bg-white p-7 shadow-xl">
@@ -729,7 +997,9 @@ export default function Checkout() {
               <button
                 type="button"
                 onClick={() =>
-                  setShowAddressModal(false)
+                  setShowAddressModal(
+                    false,
+                  )
                 }
                 aria-label="Close"
               >
@@ -754,8 +1024,12 @@ export default function Checkout() {
                   name="fullName"
                   type="text"
                   required
-                  value={addressForm.fullName}
-                  onChange={handleAddressChange}
+                  value={
+                    addressForm.fullName
+                  }
+                  onChange={
+                    handleAddressChange
+                  }
                   placeholder="John Doe"
                   className="h-[52px] w-full rounded-[8px] border border-[#cccccc] px-4 outline-none focus:border-[#ff5a00]"
                 />
@@ -774,8 +1048,12 @@ export default function Checkout() {
                   name="phone"
                   type="tel"
                   required
-                  value={addressForm.phone}
-                  onChange={handleAddressChange}
+                  value={
+                    addressForm.phone
+                  }
+                  onChange={
+                    handleAddressChange
+                  }
                   placeholder="+234..."
                   className="h-[52px] w-full rounded-[8px] border border-[#cccccc] px-4 outline-none focus:border-[#ff5a00]"
                 />
@@ -794,8 +1072,12 @@ export default function Checkout() {
                   name="street"
                   type="text"
                   required
-                  value={addressForm.street}
-                  onChange={handleAddressChange}
+                  value={
+                    addressForm.street
+                  }
+                  onChange={
+                    handleAddressChange
+                  }
                   placeholder="30 Sage Drive"
                   className="h-[52px] w-full rounded-[8px] border border-[#cccccc] px-4 outline-none focus:border-[#ff5a00]"
                 />
@@ -815,8 +1097,12 @@ export default function Checkout() {
                     name="city"
                     type="text"
                     required
-                    value={addressForm.city}
-                    onChange={handleAddressChange}
+                    value={
+                      addressForm.city
+                    }
+                    onChange={
+                      handleAddressChange
+                    }
                     placeholder="Abuja"
                     className="h-[52px] w-full rounded-[8px] border border-[#cccccc] px-4 outline-none focus:border-[#ff5a00]"
                   />
@@ -835,8 +1121,12 @@ export default function Checkout() {
                     name="state"
                     type="text"
                     required
-                    value={addressForm.state}
-                    onChange={handleAddressChange}
+                    value={
+                      addressForm.state
+                    }
+                    onChange={
+                      handleAddressChange
+                    }
                     placeholder="FCT"
                     className="h-[52px] w-full rounded-[8px] border border-[#cccccc] px-4 outline-none focus:border-[#ff5a00]"
                   />
@@ -856,8 +1146,12 @@ export default function Checkout() {
                   name="country"
                   type="text"
                   required
-                  value={addressForm.country}
-                  onChange={handleAddressChange}
+                  value={
+                    addressForm.country
+                  }
+                  onChange={
+                    handleAddressChange
+                  }
                   className="h-[52px] w-full rounded-[8px] border border-[#cccccc] px-4 outline-none focus:border-[#ff5a00]"
                 />
               </div>
@@ -873,287 +1167,284 @@ export default function Checkout() {
         </div>
       )}
 
-      {/* DEMO PAYSTACK PAYMENT MODAL */}
-      {showDemoPayment && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 px-5">
-          <div className="w-full max-w-[480px] rounded-[16px] bg-white p-7 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div>
+      {showSuccessModal &&
+        completedOrder && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 px-4 py-6 sm:px-6">
+            <div className="max-h-[94vh] w-full max-w-[1250px] overflow-y-auto rounded-[4px] bg-white px-6 py-8 shadow-2xl sm:px-8 lg:px-12 lg:py-10">
+              <div className="flex flex-col items-center text-center">
                 <img
-                  src="/assets/paystack.png"
-                  alt="Paystack"
-                  className="h-[34px] w-auto object-contain"
+                  src="/assets/green-checkmark.png"
+                  alt="Order successful"
+                  className="h-[86px] w-[86px] object-contain"
                 />
 
-                <h2 className="mt-4 text-[27px] font-bold">
-                  Complete Payment
-                </h2>
+                <h1 className="mt-7 text-[34px] font-bold tracking-[-1.5px] sm:text-[38px]">
+                  Thank you,{' '}
+                  <span className="text-[#ff5a00]">
+                    {
+                      completedOrder.firstName
+                    }
+                    !
+                  </span>
+                </h1>
+
+                <p className="mt-3 text-[17px] text-[#666666] sm:text-[18px]">
+                  Your order has been placed successfully.
+                </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() =>
-                  setShowDemoPayment(false)
-                }
-                disabled={paymentProcessing}
-                aria-label="Close payment"
-              >
-                <FiX className="h-6 w-6" />
-              </button>
-            </div>
+              <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-[430px_minmax(0,1fr)]">
+                <div className="space-y-6">
+                  <div className="rounded-[9px] border border-[#d9d9d9] p-6">
+                    <h2 className="text-[19px] font-bold">
+                      Order Details
+                    </h2>
 
-            <div className="my-7 rounded-[10px] bg-[#f7f7f7] p-5">
-              <p className="text-sm text-gray-500">
-                Amount
-              </p>
+                    <div className="mt-6 space-y-4 text-[16px]">
+                      <div className="grid grid-cols-[120px_1fr] gap-5">
+                        <span className="text-[#666666]">
+                          Order Number
+                        </span>
 
-              <p className="mt-1 text-[30px] font-bold">
-                {formatPrice(finalTotal)}
-              </p>
+                        <span className="font-medium text-[#555555]">
+                          {
+                            completedOrder.orderNumber
+                          }
+                        </span>
+                      </div>
 
-              <p className="mt-4 text-sm leading-6 text-gray-500">
-                This is a TailorIt frontend demo.
-                No real payment will be charged.
-              </p>
-            </div>
+                      <div className="grid grid-cols-[120px_1fr] gap-5">
+                        <span className="text-[#666666]">
+                          Order Date
+                        </span>
 
-            <button
-              type="button"
-              onClick={completeDemoPayment}
-              disabled={paymentProcessing}
-              className="h-[56px] w-full rounded-[8px] bg-[#00a8d6] font-semibold text-white disabled:cursor-wait disabled:opacity-60"
-            >
-              {paymentProcessing
-                ? 'Processing...'
-                : `Pay ${formatPrice(finalTotal)}`}
-            </button>
-          </div>
-        </div>
-      )}
+                        <span className="font-medium text-[#555555]">
+                          {
+                            completedOrder.orderDate
+                          }
+                        </span>
+                      </div>
 
-      {/* ORDER SUCCESS MODAL */}
-      {showSuccessModal && completedOrder && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 px-4 py-6 sm:px-6">
-          <div className="max-h-[94vh] w-full max-w-[1250px] overflow-y-auto rounded-[4px] bg-white px-6 py-8 shadow-2xl sm:px-8 lg:px-12 lg:py-10">
-            {/* SUCCESS HEADER */}
-            <div className="flex flex-col items-center text-center">
-              <img
-                src="/assets/green-checkmark.png"
-                alt="Order successful"
-                className="h-[86px] w-[86px] object-contain"
-              />
+                      <div className="grid grid-cols-[120px_1fr] gap-5">
+                        <span className="text-[#666666]">
+                          Payment
+                        </span>
 
-              <h1 className="mt-7 text-[34px] font-bold tracking-[-1.5px] sm:text-[38px]">
-                Thank you,{' '}
-                <span className="text-[#ff5a00]">
-                  {completedOrder.firstName}!
-                </span>
-              </h1>
+                        <span className="font-medium text-[#555555]">
+                          Paid
+                        </span>
+                      </div>
 
-              <p className="mt-3 text-[17px] text-[#666666] sm:text-[18px]">
-                Your order has been placed successfully.
-              </p>
-            </div>
+                      <div className="grid grid-cols-[120px_1fr] gap-5">
+                        <span className="text-[#666666]">
+                          Status
+                        </span>
 
-            {/* ORDER INFORMATION */}
-            <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-[430px_minmax(0,1fr)]">
-              {/* LEFT COLUMN */}
-              <div className="space-y-6">
-                {/* ORDER DETAILS */}
-                <div className="rounded-[9px] border border-[#d9d9d9] p-6">
-                  <h2 className="text-[19px] font-bold">
-                    Order Details
-                  </h2>
-
-                  <div className="mt-6 space-y-4 text-[16px]">
-                    <div className="grid grid-cols-[120px_1fr] gap-5">
-                      <span className="text-[#666666]">
-                        Order Number
-                      </span>
-
-                      <span className="font-medium text-[#555555]">
-                        {completedOrder.orderNumber}
-                      </span>
+                        <span className="font-medium capitalize text-[#555555]">
+                          {
+                            completedOrder.status
+                          }
+                        </span>
+                      </div>
                     </div>
+                  </div>
 
-                    <div className="grid grid-cols-[120px_1fr] gap-5">
-                      <span className="text-[#666666]">
-                        Order Date
-                      </span>
+                  <div className="rounded-[9px] border border-[#d9d9d9] p-6">
+                    <h2 className="text-[19px] font-bold">
+                      Estimated Delivery
+                    </h2>
 
-                      <span className="font-medium text-[#555555]">
-                        {completedOrder.orderDate}
-                      </span>
-                    </div>
+                    <p className="mt-6 text-[17px] font-medium">
+                      {
+                        completedOrder.estimatedDelivery
+                      }
+                    </p>
+
+                    <p className="mt-3 text-[16px] leading-[1.4] text-[#666666]">
+                      Your order has been shipped and is expected to be delivered on this date.
+                    </p>
                   </div>
                 </div>
 
-                {/* ESTIMATED DELIVERY */}
                 <div className="rounded-[9px] border border-[#d9d9d9] p-6">
                   <h2 className="text-[19px] font-bold">
-                    Estimated Delivery
+                    Order Summary
                   </h2>
 
-                  <p className="mt-6 text-[17px] font-medium">
-                    {completedOrder.estimatedDelivery}
-                  </p>
+                  <div className="mt-5 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_1px_300px]">
+                    <div className="space-y-5">
+                      {completedOrder.items.map(
+                        (item) => {
+                          const quantity =
+                            Number(
+                              item.quantity ||
+                                1,
+                            )
 
-                  <p className="mt-3 text-[16px] leading-[1.4] text-[#666666]">
-                    Tracking information will be
-                    available once shipped.
-                  </p>
-                </div>
-              </div>
+                          const isCustom =
+                            Boolean(
+                              item
+                                .customization
+                                ?.nameText ||
+                                item
+                                  .customization
+                                  ?.text ||
+                                (
+                                  item
+                                    .customization
+                                    ?.pattern !==
+                                  'none'
+                                ) ||
+                                (
+                                  item
+                                    .customization
+                                    ?.graphic !==
+                                  'none'
+                                ),
+                            )
 
-              {/* ORDER SUMMARY */}
-              <div className="rounded-[9px] border border-[#d9d9d9] p-6">
-                <h2 className="text-[19px] font-bold">
-                  Order Summary
-                </h2>
+                          return (
+                            <div
+                              key={
+                                item.cartId ||
+                                item.cartItemId ||
+                                item.productId
+                              }
+                              className="flex gap-4"
+                            >
+                              <div className="flex h-[74px] w-[74px] shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-[#eeeeee]">
+                                <img
+                                  src={
+                                    item.image
+                                  }
+                                  alt={
+                                    item.name
+                                  }
+                                  className="h-full w-full object-contain"
+                                />
+                              </div>
 
-                <div className="mt-5 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_1px_300px]">
-                  {/* PRODUCTS */}
-                  <div className="space-y-5">
-                    {completedOrder.items.map(
-                      (item) => {
-                        const quantity = Number(
-                          item.quantity || 1,
-                        )
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[16px] font-medium">
+                                  {
+                                    item.name
+                                  }{' '}
+                                  <span className="text-[#666666]">
+                                    (
+                                    {isCustom
+                                      ? 'Customized'
+                                      : 'Plain'}
+                                    )
+                                  </span>
+                                </p>
 
-                        const isCustom =
-                          item.customization?.nameText ||
-                          item.customization?.text ||
-                          item.customization?.pattern !==
-                            'none' ||
-                          item.customization?.graphic !==
-                            'none'
+                                <div className="mt-3 flex items-center justify-between gap-4 text-[16px]">
+                                  <span className="text-[#666666]">
+                                    Qty:{' '}
+                                    {
+                                      quantity
+                                    }
+                                  </span>
 
-                        return (
-                          <div
-                            key={item.cartId}
-                            className="flex gap-4"
-                          >
-                            <div className="flex h-[74px] w-[74px] shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-[#eeeeee]">
-                              <img
-                                src={item.image}
-                                alt={item.name}
-                                className="h-full w-full object-contain"
-                              />
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                              <p className="text-[16px] font-medium">
-                                {item.name}{' '}
-                                <span className="text-[#666666]">
-                                  (
-                                  {isCustom
-                                    ? 'Customized'
-                                    : 'Plain'}
-                                  )
-                                </span>
-                              </p>
-
-                              <div className="mt-3 flex items-center justify-between gap-4 text-[16px]">
-                                <span className="text-[#666666]">
-                                  Qty: {quantity}
-                                </span>
-
-                                <span className="font-medium">
-                                  {formatPrice(
-                                    Number(
-                                      item.totalPrice ||
-                                        0,
-                                    ) * quantity,
-                                  )}
-                                </span>
+                                  <span className="font-medium">
+                                    {formatPrice(
+                                      Number(
+                                        item.totalPrice ||
+                                          item.unitPrice ||
+                                          0,
+                                      ) *
+                                        quantity,
+                                    )}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        )
-                      },
-                    )}
-                  </div>
-
-                  {/* VERTICAL DIVIDER */}
-                  <div className="hidden bg-[#dddddd] lg:block" />
-
-                  {/* TOTALS */}
-                  <div className="space-y-7">
-                    <div className="flex items-center justify-between gap-6 text-[16px]">
-                      <span className="text-[#666666]">
-                        Subtotal
-                      </span>
-
-                      <span className="font-medium">
-                        {formatPrice(
-                          completedOrder.subtotal,
-                        )}
-                      </span>
+                          )
+                        },
+                      )}
                     </div>
 
-                    <div className="flex items-center justify-between gap-6 text-[16px]">
-                      <span className="text-[#666666]">
-                        Customization Total
-                      </span>
+                    <div className="hidden bg-[#dddddd] lg:block" />
 
-                      <span className="font-medium">
-                        {formatPrice(
-                          completedOrder.customizationTotal,
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-6 text-[16px]">
-                      <span className="text-[#666666]">
-                        Delivery Fee
-                      </span>
-
-                      <span className="font-medium">
-                        {formatPrice(
-                          completedOrder.deliveryFee,
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="border-t border-[#dddddd] pt-7">
-                      <div className="flex items-center justify-between gap-6">
-                        <span className="text-[18px] font-bold">
-                          Total
+                    <div className="space-y-7">
+                      <div className="flex items-center justify-between gap-6 text-[16px]">
+                        <span className="text-[#666666]">
+                          Subtotal
                         </span>
 
-                        <span className="text-[19px] font-bold text-[#ff5a00]">
+                        <span className="font-medium">
                           {formatPrice(
-                            completedOrder.total,
+                            completedOrder.subtotal,
                           )}
                         </span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-6 text-[16px]">
+                        <span className="text-[#666666]">
+                          Customization Total
+                        </span>
+
+                        <span className="font-medium">
+                          {formatPrice(
+                            completedOrder.customizationTotal,
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-6 text-[16px]">
+                        <span className="text-[#666666]">
+                          Delivery Fee
+                        </span>
+
+                        <span className="font-medium">
+                          {formatPrice(
+                            completedOrder.deliveryFee,
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="border-t border-[#dddddd] pt-7">
+                        <div className="flex items-center justify-between gap-6">
+                          <span className="text-[18px] font-bold">
+                            Total
+                          </span>
+
+                          <span className="text-[19px] font-bold text-[#ff5a00]">
+                            {formatPrice(
+                              completedOrder.total,
+                            )}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* ACTION BUTTONS */}
-            <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
-              <button
-                type="button"
-                onClick={finishDemoOrder}
-                className="flex h-[58px] items-center justify-center rounded-[9px] bg-[#ff5a00] text-[17px] font-medium text-white transition hover:bg-[#e95000]"
-              >
-                Continue Shopping
-              </button>
+              <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={
+                    finishDemoOrder
+                  }
+                  className="flex h-[58px] items-center justify-center rounded-[9px] bg-[#ff5a00] text-[17px] font-medium text-white transition hover:bg-[#e95000]"
+                >
+                  Continue Shopping
+                </button>
 
-              <button
-                type="button"
-                onClick={viewOrderHistory}
-                className="flex h-[58px] items-center justify-center rounded-[9px] border border-[#d5d5d5] text-[17px] font-medium text-black transition hover:bg-black hover:text-white"
-              >
-                View Order History
-              </button>
+                <button
+                  type="button"
+                  onClick={
+                    viewOrderHistory
+                  }
+                  className="flex h-[58px] items-center justify-center rounded-[9px] border border-[#d5d5d5] text-[17px] font-medium text-black transition hover:bg-black hover:text-white"
+                >
+                  View Order History
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </main>
   )
 }

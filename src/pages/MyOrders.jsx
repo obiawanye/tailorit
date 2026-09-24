@@ -23,10 +23,9 @@ const formatDate = (dateString) => {
     return 'N/A'
   }
 
-  const day = String(date.getDate()).padStart(
-    2,
-    '0',
-  )
+  const day = String(
+    date.getDate(),
+  ).padStart(2, '0')
 
   const month = String(
     date.getMonth() + 1,
@@ -58,12 +57,16 @@ const getEstimatedDeliveryDate = (
 
   const deliveryDate = new Date(createdAt)
 
-  if (Number.isNaN(deliveryDate.getTime())) {
+  if (
+    Number.isNaN(
+      deliveryDate.getTime(),
+    )
+  ) {
     return null
   }
 
   deliveryDate.setDate(
-    deliveryDate.getDate() + 10,
+    deliveryDate.getDate() + 7,
   )
 
   return deliveryDate.toISOString()
@@ -151,7 +154,11 @@ const getOrderStatus = (
     deliveryDate,
   )
 
-  if (Number.isNaN(delivery.getTime())) {
+  if (
+    Number.isNaN(
+      delivery.getTime(),
+    )
+  ) {
     return {
       label: 'Order processing',
       delivered: false,
@@ -164,7 +171,8 @@ const getOrderStatus = (
     delivery.getDate(),
   )
 
-  const today = getTodayAtMidnight()
+  const today =
+    getTodayAtMidnight()
 
   if (today >= deliveryDay) {
     return {
@@ -187,7 +195,9 @@ const getProductCategory = (item) => {
   const category =
     item.category?.toLowerCase()
 
-  if (category === 'phone-cases') {
+  if (
+    category === 'phone-cases'
+  ) {
     return 'phone-cases'
   }
 
@@ -236,12 +246,11 @@ const getProductCategory = (item) => {
 }
 
 const getItemPrice = (item) => {
-  const unitPrice =
-    Number(
-      item.totalPrice ??
-        item.unitPrice ??
-        0,
-    )
+  const unitPrice = Number(
+    item.totalPrice ??
+      item.unitPrice ??
+      0,
+  )
 
   return (
     unitPrice *
@@ -470,26 +479,28 @@ export default function MyOrders() {
           order.createdAt,
         )
 
-      return items.map((item, index) => ({
-        ...item,
+      return items.map(
+        (item, index) => ({
+          ...item,
 
-        orderNumber:
-          order.orderNumber,
+          orderNumber:
+            order.orderNumber,
 
-        orderDate:
-          order.createdAt ||
-          order.orderDate,
+          orderDate:
+            order.createdAt ||
+            order.orderDate,
 
-        deliveryDate,
+          deliveryDate,
 
-        orderStatus:
-          order.status,
+          orderStatus:
+            order.status,
 
-        paymentStatus:
-          order.paymentStatus,
+          paymentStatus:
+            order.paymentStatus,
 
-        orderIndex: index,
-      }))
+          orderIndex: index,
+        }),
+      )
     })
   }, [orders])
 
@@ -525,12 +536,11 @@ export default function MyOrders() {
 
     filtered = filtered.filter(
       (item) => {
-        const price =
-          Number(
-            item.totalPrice ??
-              item.unitPrice ??
-              0,
-          )
+        const price = Number(
+          item.totalPrice ??
+            item.unitPrice ??
+            0,
+        )
 
         return (
           price >= minPrice &&
@@ -935,7 +945,7 @@ export default function MyOrders() {
 
                     return (
                       <article
-                        key={`${item.orderNumber}-${item.cartItemId || item.productId}-${index}`}
+                        key={`${item.orderNumber}-${item.cartItemId || item.cartId || item.productId}-${index}`}
                         className="flex flex-col gap-6 border-b border-dashed border-[#cfcfcf] py-5 md:flex-row md:items-center"
                       >
                         {/* PRODUCT IMAGE */}
@@ -969,16 +979,14 @@ export default function MyOrders() {
                             </p>
 
                             {customizationText && (
-                              <>
-                                <p>
-                                  <span className="font-semibold">
-                                    Name:
-                                  </span>{' '}
-                                  {
-                                    customizationText
-                                  }
-                                </p>
-                              </>
+                              <p>
+                                <span className="font-semibold">
+                                  Name:
+                                </span>{' '}
+                                {
+                                  customizationText
+                                }
+                              </p>
                             )}
 
                             {pattern &&
@@ -1005,7 +1013,9 @@ export default function MyOrders() {
 
                             <p className="mt-2 text-sm text-gray-500">
                               Order #{' '}
-                              {item.orderNumber}
+                              {
+                                item.orderNumber
+                              }
                             </p>
 
                             <p className="text-sm text-gray-500">
