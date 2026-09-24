@@ -40,7 +40,7 @@ const PRODUCTS = {
   5: {
     name: 'TAILORIT EXCLUSIVE TRAVEL BAG',
     price: 900,
-    image: '/assets/Catalog/Catalog-black-orange-bag.png',
+    image: '/assets/Catalog/catalog-black-orange-bag.png',
   },
   6: {
     name: 'CREASED BLACK EFFECT SHIRT',
@@ -59,11 +59,48 @@ const VALID_COLORS = new Set([
   'purple',
 ])
 
+/*
+ * Pattern IDs used by the frontend.
+ *
+ * The frontend can use either:
+ *
+ * none
+ * plain
+ * camo
+ * chevron
+ * abstract
+ *
+ * or combined pattern IDs such as:
+ *
+ * abstract-white
+ */
 const VALID_PATTERNS = new Set([
   'none',
+  'plain',
   'camo',
   'chevron',
   'abstract',
+  'abstract-white',
+  'abstract-black',
+  'abstract-orange',
+  'abstract-red',
+  'abstract-green',
+  'abstract-blue',
+  'abstract-purple',
+  'camo-white',
+  'camo-black',
+  'camo-orange',
+  'camo-red',
+  'camo-green',
+  'camo-blue',
+  'camo-purple',
+  'chevron-white',
+  'chevron-black',
+  'chevron-orange',
+  'chevron-red',
+  'chevron-green',
+  'chevron-blue',
+  'chevron-purple',
   'orange',
 ])
 
@@ -76,6 +113,22 @@ const VALID_GRAPHICS = new Set([
 ])
 
 const MAX_TEXT_LENGTH = 52
+
+function normalizePattern(pattern) {
+  if (typeof pattern !== 'string') {
+    return 'none'
+  }
+
+  const normalized = pattern
+    .trim()
+    .toLowerCase()
+
+  if (normalized === 'plain') {
+    return 'none'
+  }
+
+  return normalized
+}
 
 function calculateItemPrice(item) {
   const productId = Number(item?.productId)
@@ -114,33 +167,40 @@ function calculateItemPrice(item) {
 
   const color =
     typeof customization.color === 'string'
-      ? customization.color.trim().toLowerCase()
+      ? customization.color
+          .trim()
+          .toLowerCase()
       : ''
 
   const rawPattern =
     typeof customization.pattern === 'string'
-      ? customization.pattern.trim().toLowerCase()
+      ? customization.pattern
+          .trim()
+          .toLowerCase()
       : 'none'
 
   const pattern =
-    rawPattern === 'plain'
-      ? 'none'
-      : rawPattern
+    normalizePattern(rawPattern)
 
   const graphic =
     typeof customization.graphic === 'string'
-      ? customization.graphic.trim().toLowerCase()
+      ? customization.graphic
+          .trim()
+          .toLowerCase()
       : 'none'
 
-  console.log('ORDER CUSTOMIZATION DEBUG:', {
-    productId,
-    rawCustomization: customization,
-    nameText,
-    color,
-    rawPattern,
-    normalizedPattern: pattern,
-    graphic,
-  })
+  console.log(
+    'ORDER CUSTOMIZATION DEBUG:',
+    {
+      productId,
+      rawCustomization: customization,
+      nameText,
+      color,
+      rawPattern,
+      normalizedPattern: pattern,
+      graphic,
+    },
+  )
 
   if (nameText.length > MAX_TEXT_LENGTH) {
     throw new Error(
@@ -166,18 +226,40 @@ function calculateItemPrice(item) {
     )
   }
 
+  /*
+   * Name text
+   */
   const nameTextPrice = nameText
     ? CUSTOMIZATION_PRICES.nameText
     : 0
 
+  /*
+   * Color
+   *
+   * Every product currently has a selected
+   * customization color, so this matches
+   * the existing TailorIt pricing logic.
+   */
   const colorPrice =
     CUSTOMIZATION_PRICES.color
 
+  /*
+   * Pattern
+   *
+   * "none" means no pattern charge.
+   *
+   * Combined IDs such as "abstract-white"
+   * are valid patterns and receive the
+   * pattern customization charge.
+   */
   const patternPrice =
     pattern !== 'none'
       ? CUSTOMIZATION_PRICES.pattern
       : 0
 
+  /*
+   * Graphic
+   */
   const graphicPrice =
     graphic !== 'none'
       ? CUSTOMIZATION_PRICES.graphic
