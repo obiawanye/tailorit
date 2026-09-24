@@ -40,7 +40,7 @@ const PRODUCTS = {
   5: {
     name: 'TAILORIT EXCLUSIVE TRAVEL BAG',
     price: 900,
-    image: '/assets/Catalog/catalog-black-orange-bag.png',
+    image: '/assets/Catalog/Catalog-black-orange-bag.png',
   },
   6: {
     name: 'CREASED BLACK EFFECT SHIRT',
@@ -82,7 +82,9 @@ function calculateItemPrice(item) {
   const product = PRODUCTS[productId]
 
   if (!product) {
-    throw new Error('Invalid product')
+    throw new Error(
+      `Invalid product ID: "${item?.productId}"`,
+    )
   }
 
   const quantity = Number(item?.quantity)
@@ -92,7 +94,9 @@ function calculateItemPrice(item) {
     quantity < 1 ||
     quantity > 100
   ) {
-    throw new Error('Invalid quantity')
+    throw new Error(
+      `Invalid quantity: "${item?.quantity}"`,
+    )
   }
 
   const customization =
@@ -113,15 +117,6 @@ function calculateItemPrice(item) {
       ? customization.color.trim().toLowerCase()
       : ''
 
-  /*
-   * Normalize pattern values from the frontend.
-   *
-   * Examples:
-   * "Plain"  -> "none"
-   * "plain"  -> "none"
-   * "NONE"   -> "none"
-   * "Camo"   -> "camo"
-   */
   const rawPattern =
     typeof customization.pattern === 'string'
       ? customization.pattern.trim().toLowerCase()
@@ -137,6 +132,16 @@ function calculateItemPrice(item) {
       ? customization.graphic.trim().toLowerCase()
       : 'none'
 
+  console.log('ORDER CUSTOMIZATION DEBUG:', {
+    productId,
+    rawCustomization: customization,
+    nameText,
+    color,
+    rawPattern,
+    normalizedPattern: pattern,
+    graphic,
+  })
+
   if (nameText.length > MAX_TEXT_LENGTH) {
     throw new Error(
       `Custom text cannot exceed ${MAX_TEXT_LENGTH} characters`,
@@ -144,26 +149,29 @@ function calculateItemPrice(item) {
   }
 
   if (!VALID_COLORS.has(color)) {
-    throw new Error('Invalid colour selection')
+    throw new Error(
+      `Invalid colour selection: "${color}"`,
+    )
   }
 
   if (!VALID_PATTERNS.has(pattern)) {
-    throw new Error('Invalid pattern selection')
+    throw new Error(
+      `Invalid pattern selection: "${pattern}" (raw: "${rawPattern}")`,
+    )
   }
 
   if (!VALID_GRAPHICS.has(graphic)) {
-    throw new Error('Invalid graphic selection')
+    throw new Error(
+      `Invalid graphic selection: "${graphic}"`,
+    )
   }
 
   const nameTextPrice = nameText
     ? CUSTOMIZATION_PRICES.nameText
     : 0
 
-  /*
-   * Every customized product has a selected color.
-   * This matches the existing TailorIt pricing logic.
-   */
-  const colorPrice = CUSTOMIZATION_PRICES.color
+  const colorPrice =
+    CUSTOMIZATION_PRICES.color
 
   const patternPrice =
     pattern !== 'none'
@@ -221,11 +229,15 @@ function calculateItemPrice(item) {
 
     unitPrice,
 
+    totalPrice: unitPrice,
+
     lineTotal,
   }
 }
 
-function validateShippingAddress(shippingAddress) {
+function validateShippingAddress(
+  shippingAddress,
+) {
   if (
     !shippingAddress ||
     typeof shippingAddress !== 'object'
@@ -246,7 +258,8 @@ function validateShippingAddress(shippingAddress) {
 
   for (const field of requiredFields) {
     if (
-      typeof shippingAddress[field] !== 'string' ||
+      typeof shippingAddress[field] !==
+        'string' ||
       !shippingAddress[field].trim()
     ) {
       throw new Error(
@@ -276,7 +289,10 @@ function validateShippingAddress(shippingAddress) {
   }
 }
 
-export default async function handler(req, res) {
+export default async function handler(
+  req,
+  res,
+) {
   if (req.method !== 'POST') {
     return res.status(405).json({
       error: 'Method not allowed',
@@ -284,7 +300,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Get Clerk session token
+    // 1. GET CLERK SESSION TOKEN
 
     const authorization =
       req.headers.authorization
@@ -307,7 +323,7 @@ export default async function handler(req, res) {
       })
     }
 
-    // 2. Verify Clerk session
+    // 2. VERIFY CLERK SESSION
 
     const verifiedToken =
       await verifyToken(token, {
@@ -325,19 +341,19 @@ export default async function handler(req, res) {
       })
     }
 
-    // 3. Get authenticated Clerk user
+    // 3. GET CLERK USER
 
     const user =
       await clerk.users.getUser(userId)
 
-    // 4. Get request data
+    // 4. GET REQUEST BODY
 
     const {
       items,
       shippingAddress,
     } = req.body || {}
 
-    // 5. Validate items
+    // 5. VALIDATE ITEMS
 
     if (
       !Array.isArray(items) ||
@@ -356,7 +372,7 @@ export default async function handler(req, res) {
       })
     }
 
-    // 6. Validate shipping address
+    // 6. VALIDATE SHIPPING ADDRESS
 
     let validatedShippingAddress
 
@@ -374,7 +390,7 @@ export default async function handler(req, res) {
       })
     }
 
-    // 7. Calculate prices on the server
+    // 7. CALCULATE EACH ITEM SERVER-SIDE
 
     let calculatedItems
 
@@ -382,6 +398,11 @@ export default async function handler(req, res) {
       calculatedItems =
         items.map(calculateItemPrice)
     } catch (error) {
+      console.error(
+        'ORDER ITEM VALIDATION ERROR:',
+        error,
+      )
+
       return res.status(400).json({
         error:
           error instanceof Error
@@ -390,7 +411,7 @@ export default async function handler(req, res) {
       })
     }
 
-    // 8. Calculate totals
+    // 8. CALCULATE BASE SUBTOTAL
 
     const baseSubtotal =
       calculatedItems.reduce(
@@ -400,6 +421,8 @@ export default async function handler(req, res) {
             item.quantity,
         0,
       )
+
+    // 9. CALCULATE CUSTOMIZATION TOTAL
 
     const customizationTotal =
       calculatedItems.reduce(
@@ -423,6 +446,8 @@ export default async function handler(req, res) {
         0,
       )
 
+    // 10. CALCULATE FINAL TOTAL
+
     const subtotal =
       baseSubtotal +
       customizationTotal
@@ -434,14 +459,14 @@ export default async function handler(req, res) {
       subtotal +
       deliveryFee
 
-    // 9. Generate order number
+    // 11. GENERATE ORDER NUMBER
 
     const orderNumber =
       `TT-${Date.now()
         .toString()
         .slice(-8)}`
 
-    // 10. Create Firestore order
+    // 12. CREATE FIRESTORE ORDER
 
     const orderRef =
       db.collection('orders').doc()
@@ -499,7 +524,7 @@ export default async function handler(req, res) {
 
     await orderRef.set(orderData)
 
-    // 11. Return the server-calculated order
+    // 13. RETURN CREATED ORDER
 
     return res.status(201).json({
       success: true,
@@ -511,13 +536,15 @@ export default async function handler(req, res) {
     })
   } catch (error) {
     console.error(
-      'Order creation error:',
+      'ORDER CREATION ERROR:',
       error,
     )
 
     return res.status(500).json({
       error:
-        'Failed to create order',
+        error instanceof Error
+          ? error.message
+          : 'Failed to create order',
     })
   }
 }
