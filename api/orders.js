@@ -110,16 +110,21 @@ function calculateItemPrice(item) {
 
   const color =
     typeof customization.color === 'string'
-      ? customization.color
+      ? customization.color.trim().toLowerCase()
       : ''
 
   /*
-   * The frontend may call the plain/default pattern
-   * "plain", while the backend stores it as "none".
+   * Normalize pattern values from the frontend.
+   *
+   * Examples:
+   * "Plain"  -> "none"
+   * "plain"  -> "none"
+   * "NONE"   -> "none"
+   * "Camo"   -> "camo"
    */
   const rawPattern =
     typeof customization.pattern === 'string'
-      ? customization.pattern
+      ? customization.pattern.trim().toLowerCase()
       : 'none'
 
   const pattern =
@@ -129,7 +134,7 @@ function calculateItemPrice(item) {
 
   const graphic =
     typeof customization.graphic === 'string'
-      ? customization.graphic
+      ? customization.graphic.trim().toLowerCase()
       : 'none'
 
   if (nameText.length > MAX_TEXT_LENGTH) {
@@ -154,6 +159,10 @@ function calculateItemPrice(item) {
     ? CUSTOMIZATION_PRICES.nameText
     : 0
 
+  /*
+   * Every customized product has a selected color.
+   * This matches the existing TailorIt pricing logic.
+   */
   const colorPrice = CUSTOMIZATION_PRICES.color
 
   const patternPrice =
@@ -247,12 +256,23 @@ function validateShippingAddress(shippingAddress) {
   }
 
   return {
-    fullName: shippingAddress.fullName.trim(),
-    phone: shippingAddress.phone.trim(),
-    street: shippingAddress.street.trim(),
-    city: shippingAddress.city.trim(),
-    state: shippingAddress.state.trim(),
-    country: shippingAddress.country.trim(),
+    fullName:
+      shippingAddress.fullName.trim(),
+
+    phone:
+      shippingAddress.phone.trim(),
+
+    street:
+      shippingAddress.street.trim(),
+
+    city:
+      shippingAddress.city.trim(),
+
+    state:
+      shippingAddress.state.trim(),
+
+    country:
+      shippingAddress.country.trim(),
   }
 }
 
@@ -289,15 +309,14 @@ export default async function handler(req, res) {
 
     // 2. Verify Clerk session
 
-    const verifiedToken = await verifyToken(
-      token,
-      {
+    const verifiedToken =
+      await verifyToken(token, {
         secretKey:
           process.env.CLERK_SECRET_KEY,
-      },
-    )
+      })
 
-    const userId = verifiedToken.sub
+    const userId =
+      verifiedToken.sub
 
     if (!userId) {
       return res.status(401).json({
@@ -417,9 +436,10 @@ export default async function handler(req, res) {
 
     // 9. Generate order number
 
-    const orderNumber = `TT-${Date.now()
-      .toString()
-      .slice(-8)}`
+    const orderNumber =
+      `TT-${Date.now()
+        .toString()
+        .slice(-8)}`
 
     // 10. Create Firestore order
 
