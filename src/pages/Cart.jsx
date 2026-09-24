@@ -48,7 +48,6 @@ const formatPrice = (price) =>
 
 | Later:
 | localStorage → Firestore
-
 */
 
 const getSavedCart = () => {
@@ -81,8 +80,7 @@ export default function Cart() {
   const [promoCode, setPromoCode] = useState('')
   const [promoMessage, setPromoMessage] = useState('')
 
-  
-  /* CART  */
+  /*  CART  */
 
   const updateCart = (updatedCart) => {
     setCart(updatedCart)
@@ -93,7 +91,7 @@ export default function Cart() {
     )
   }
 
-  /* SELECTION  */
+  /*  SELECTION  */
 
   const toggleItemSelection = (cartId) => {
     setSelectedItems((currentSelected) => {
@@ -117,7 +115,7 @@ export default function Cart() {
     setSelectedItems([])
   }
 
-  /* QUANTITY  */
+  /*  QUANTITY  */
 
   const increaseQuantity = (cartId) => {
     const updatedCart = cart.map((item) => {
@@ -164,7 +162,7 @@ export default function Cart() {
     updateCart(updatedCart)
   }
 
-  /* REMOVE ITEMS  */
+  /*  REMOVE ITEMS  */
 
   const removeItem = (cartId) => {
     const updatedCart = cart.filter(
@@ -183,7 +181,7 @@ export default function Cart() {
     setSelectedItems([])
   }
 
-  /* SELECTED ITEMS  */
+  /*  SELECTED ITEMS  */
 
   const selectedCartItems = cart.filter((item) =>
     selectedItems.includes(item.cartId),
@@ -222,7 +220,7 @@ export default function Cart() {
     cart.length > 0 &&
     selectedItems.length === cart.length
 
-  /* PROMO CODE  */
+  /*  PROMO CODE  */
 
   const applyPromoCode = () => {
     const code = promoCode.trim()
@@ -235,7 +233,7 @@ export default function Cart() {
     setPromoMessage('Promo code applied.')
   }
 
-  /* CHECKOUT */
+  /*  CHECKOUT  */
 
   const handleCheckout = () => {
     if (selectedCartItems.length === 0) {
@@ -427,16 +425,18 @@ export default function Cart() {
                   return (
                     <article
                       key={item.cartId}
-                      className={`relative py-5 ${
+                      className={`py-5 ${
                         index !== cart.length - 1
                           ? 'border-b border-dashed border-[#cfcfcf]'
                           : ''
                       }`}
                     >
-                      <div className="relative flex flex-col gap-5 sm:flex-row sm:gap-6">
+                      {/* MOBILE LAYOUT */}
+
+                      <div className="flex gap-3 sm:hidden">
                         {/* SELECTION */}
 
-                        <div className="absolute left-0 top-1 z-10 flex items-center sm:static">
+                        <div className="flex shrink-0 items-start pt-1">
                           <button
                             type="button"
                             onClick={() =>
@@ -465,7 +465,7 @@ export default function Cart() {
 
                         {/* IMAGE */}
 
-                        <div className="ml-10 flex h-[190px] w-[calc(100%-40px)] max-w-[240px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#eeeeee] sm:ml-0 sm:h-[170px] sm:w-[170px]">
+                        <div className="flex h-[155px] w-[42%] min-w-0 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#eeeeee]">
                           <img
                             src={item.image}
                             alt={item.name}
@@ -476,33 +476,29 @@ export default function Cart() {
                         {/* DETAILS */}
 
                         <div className="flex min-w-0 flex-1 flex-col">
-                          <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:gap-6">
-                            <div className="min-w-0">
-                              <span
-                                className={`inline-flex rounded-full border px-3 py-1.5 text-[13px] font-semibold sm:px-4 sm:py-2 sm:text-[14px] ${
-                                  isTailored
-                                    ? 'border-[#ff5a00] text-[#ff5a00]'
-                                    : 'border-[#999999] text-[#555555]'
-                                }`}
-                              >
-                                {isTailored
-                                  ? 'Tailored'
-                                  : 'Plain'}
-                              </span>
+                          <span
+                            className={`inline-flex w-fit rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
+                              isTailored
+                                ? 'border-[#ff5a00] text-[#ff5a00]'
+                                : 'border-[#999999] text-[#555555]'
+                            }`}
+                          >
+                            {isTailored
+                              ? 'Tailored'
+                              : 'Plain'}
+                          </span>
 
-                              <h2 className="mt-3 text-[23px] font-bold leading-tight tracking-[-0.7px] sm:mt-4 sm:text-[27px]">
-                                {item.name}
-                              </h2>
-                            </div>
+                          <h2 className="mt-2 text-[18px] font-bold leading-[1.15] tracking-[-0.4px]">
+                            {item.name}
+                          </h2>
 
-                            <p className="whitespace-nowrap text-[23px] font-semibold sm:text-[27px]">
-                              {formatPrice(
-                                item.totalPrice,
-                              )}
-                            </p>
-                          </div>
+                          <p className="mt-3 text-[18px] font-semibold">
+                            {formatPrice(
+                              item.totalPrice,
+                            )}
+                          </p>
 
-                          <div className="mt-3 space-y-1 text-[15px] sm:text-[17px]">
+                          <div className="mt-2 space-y-0.5 text-[13px] leading-[1.35]">
                             <p>
                               <span className="font-semibold">
                                 Color:
@@ -571,8 +567,200 @@ export default function Cart() {
                               )}
                           </div>
 
-                          <div className="mt-5 flex items-center justify-between gap-4 pt-2 sm:mt-auto sm:items-end sm:pt-5">
-                            <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  decreaseQuantity(
+                                    item.cartId,
+                                  )
+                                }
+                                aria-label="Decrease quantity"
+                                className="flex h-7 w-7 items-center justify-center rounded-full border border-[#cccccc] transition hover:bg-gray-100"
+                              >
+                                <FiMinus className="h-3.5 w-3.5" />
+                              </button>
+
+                              <span className="min-w-[18px] text-center text-[14px]">
+                                {String(
+                                  item.quantity ||
+                                    1,
+                                ).padStart(2, '0')}
+                              </span>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  increaseQuantity(
+                                    item.cartId,
+                                  )
+                                }
+                                aria-label="Increase quantity"
+                                className="flex h-7 w-7 items-center justify-center rounded-full border border-[#cccccc] transition hover:bg-gray-100"
+                              >
+                                <FiPlus className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removeItem(
+                                  item.cartId,
+                                )
+                              }
+                              aria-label={`Remove ${item.name}`}
+                              className="shrink-0 text-[#888888] transition hover:text-red-500"
+                            >
+                              <FiTrash2 className="h-[20px] w-[20px]" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* DESKTOP LAYOUT */}
+
+                      <div className="hidden gap-6 sm:flex">
+                        {/* SELECTION */}
+
+                        <div className="flex items-center">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              toggleItemSelection(
+                                item.cartId,
+                              )
+                            }
+                            aria-label={
+                              isSelected
+                                ? `Deselect ${item.name}`
+                                : `Select ${item.name}`
+                            }
+                            className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border ${
+                              isSelected
+                                ? 'border-[#ff5a00] bg-[#ff5a00]'
+                                : 'border-black bg-white'
+                            }`}
+                          >
+                            {isSelected && (
+                              <span className="text-[18px] font-bold text-white">
+                                ✓
+                              </span>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* IMAGE */}
+
+                        <div className="flex h-[170px] w-[170px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#eeeeee]">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
+
+                        {/* DETAILS */}
+
+                        <div className="flex min-w-0 flex-1 flex-col">
+                          <div className="flex items-start justify-between gap-6">
+                            <div className="min-w-0">
+                              <span
+                                className={`inline-flex rounded-full border px-4 py-2 text-[14px] font-semibold ${
+                                  isTailored
+                                    ? 'border-[#ff5a00] text-[#ff5a00]'
+                                    : 'border-[#999999] text-[#555555]'
+                                }`}
+                              >
+                                {isTailored
+                                  ? 'Tailored'
+                                  : 'Plain'}
+                              </span>
+
+                              <h2 className="mt-4 text-[27px] font-bold tracking-[-0.7px]">
+                                {item.name}
+                              </h2>
+                            </div>
+
+                            <p className="whitespace-nowrap text-[27px] font-semibold">
+                              {formatPrice(
+                                item.totalPrice,
+                              )}
+                            </p>
+                          </div>
+
+                          <div className="mt-3 space-y-1 text-[17px]">
+                            <p>
+                              <span className="font-semibold">
+                                Color:
+                              </span>{' '}
+                              {colorNames[
+                                item.customization
+                                  ?.color
+                              ] ||
+                                item.customization
+                                  ?.color ||
+                                'Orange'}
+                            </p>
+
+                            {item.customization
+                              ?.text && (
+                              <p>
+                                <span className="font-semibold">
+                                  Name:
+                                </span>{' '}
+                                {
+                                  item
+                                    .customization
+                                    .text
+                                }
+                              </p>
+                            )}
+
+                            {item.customization
+                              ?.pattern &&
+                              item.customization
+                                .pattern !==
+                                'none' && (
+                                <p>
+                                  <span className="font-semibold">
+                                    Pattern:
+                                  </span>{' '}
+                                  {patternNames[
+                                    item
+                                      .customization
+                                      .pattern
+                                  ] ||
+                                    item
+                                      .customization
+                                      .pattern}
+                                </p>
+                              )}
+
+                            {item.customization
+                              ?.graphic &&
+                              item.customization
+                                .graphic !==
+                                'none' && (
+                                <p>
+                                  <span className="font-semibold">
+                                    Graphic:
+                                  </span>{' '}
+                                  {graphicNames[
+                                    item
+                                      .customization
+                                      .graphic
+                                  ] ||
+                                    item
+                                      .customization
+                                      .graphic}
+                                </p>
+                              )}
+                          </div>
+
+                          <div className="mt-auto flex items-end justify-between pt-5">
+                            <div className="flex items-center gap-3">
                               <button
                                 type="button"
                                 onClick={() =>
