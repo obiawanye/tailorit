@@ -1,4 +1,4 @@
- /* global process */
+/* global process */
 
 import {
   createClerkClient,
@@ -70,8 +70,33 @@ const VALID_COLORS = new Set([
 const VALID_PATTERNS = new Set([
   'none',
   'plain',
+
+  'orange',
+  'orange-white',
+  'orange-black',
+  'orange-red',
+  'orange-green',
+  'orange-blue',
+  'orange-purple',
+
   'camo',
+  'camo-white',
+  'camo-black',
+  'camo-orange',
+  'camo-red',
+  'camo-green',
+  'camo-blue',
+  'camo-purple',
+
   'chevron',
+  'chevron-white',
+  'chevron-black',
+  'chevron-orange',
+  'chevron-red',
+  'chevron-green',
+  'chevron-blue',
+  'chevron-purple',
+
   'abstract',
   'abstract-white',
   'abstract-black',
@@ -80,21 +105,6 @@ const VALID_PATTERNS = new Set([
   'abstract-green',
   'abstract-blue',
   'abstract-purple',
-  'camo-white',
-  'camo-black',
-  'camo-orange',
-  'camo-red',
-  'camo-green',
-  'camo-blue',
-  'camo-purple',
-  'chevron-white',
-  'chevron-black',
-  'chevron-orange',
-  'chevron-red',
-  'chevron-green',
-  'chevron-blue',
-  'chevron-purple',
-  'orange',
 ])
 
 const VALID_GRAPHICS = new Set([
