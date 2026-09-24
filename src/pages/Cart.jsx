@@ -42,16 +42,13 @@ const formatPrice = (price) =>
   `N${Number(price || 0).toLocaleString()}`
 
 /*
-|--------------------------------------------------------------------------
-| TEMPORARY CART STORAGE
-|--------------------------------------------------------------------------
-|
+ TEMPORARY CART STORAGE
+
 | For now the cart uses localStorage.
-|
+
 | Later:
 | localStorage → Firestore
-|
-|--------------------------------------------------------------------------
+
 */
 
 const getSavedCart = () => {
@@ -84,11 +81,8 @@ export default function Cart() {
   const [promoCode, setPromoCode] = useState('')
   const [promoMessage, setPromoMessage] = useState('')
 
-  /*
-  |--------------------------------------------------------------------------
-  | CART
-  |--------------------------------------------------------------------------
-  */
+  
+  /* CART  */
 
   const updateCart = (updatedCart) => {
     setCart(updatedCart)
@@ -99,11 +93,7 @@ export default function Cart() {
     )
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | SELECTION
-  |--------------------------------------------------------------------------
-  */
+  /* SELECTION  */
 
   const toggleItemSelection = (cartId) => {
     setSelectedItems((currentSelected) => {
@@ -127,11 +117,7 @@ export default function Cart() {
     setSelectedItems([])
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | QUANTITY
-  |--------------------------------------------------------------------------
-  */
+  /* QUANTITY  */
 
   const increaseQuantity = (cartId) => {
     const updatedCart = cart.map((item) => {
@@ -178,11 +164,7 @@ export default function Cart() {
     updateCart(updatedCart)
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | REMOVE ITEMS
-  |--------------------------------------------------------------------------
-  */
+  /* REMOVE ITEMS  */
 
   const removeItem = (cartId) => {
     const updatedCart = cart.filter(
@@ -201,11 +183,7 @@ export default function Cart() {
     setSelectedItems([])
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | SELECTED ITEMS
-  |--------------------------------------------------------------------------
-  */
+  /* SELECTED ITEMS  */
 
   const selectedCartItems = cart.filter((item) =>
     selectedItems.includes(item.cartId),
@@ -244,11 +222,7 @@ export default function Cart() {
     cart.length > 0 &&
     selectedItems.length === cart.length
 
-  /*
-  |--------------------------------------------------------------------------
-  | PROMO CODE
-  |--------------------------------------------------------------------------
-  */
+  /* PROMO CODE  */
 
   const applyPromoCode = () => {
     const code = promoCode.trim()
@@ -261,11 +235,7 @@ export default function Cart() {
     setPromoMessage('Promo code applied.')
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | CHECKOUT
-  |--------------------------------------------------------------------------
-  */
+  /* CHECKOUT */
 
   const handleCheckout = () => {
     if (selectedCartItems.length === 0) {
@@ -304,11 +274,11 @@ export default function Cart() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-black">
+    <main className="min-h-screen overflow-x-hidden bg-white text-black">
       {/* NAVBAR */}
 
       <header className="border-b border-[#eeeeee] bg-white">
-        <nav className="mx-auto flex h-[92px] w-full items-center justify-between px-8 lg:px-12">
+        <nav className="mx-auto flex h-[76px] w-full items-center justify-between px-4 sm:h-[84px] sm:px-6 lg:h-[92px] lg:px-12">
           <Link
             to="/"
             className="shrink-0"
@@ -316,11 +286,11 @@ export default function Cart() {
             <img
               src="/assets/TailorIt_Logo.png"
               alt="TailorIt"
-              className="h-[58px] w-[68px] object-contain"
+              className="h-[48px] w-[58px] object-contain sm:h-[58px] sm:w-[68px]"
             />
           </Link>
 
-          <div className="flex items-center gap-10 text-[16px]">
+          <div className="flex items-center gap-3 text-[13px] sm:gap-6 sm:text-[15px] lg:gap-10 lg:text-[16px]">
             <Link
               to="/"
               className="transition hover:text-[#ff5a00]"
@@ -343,7 +313,7 @@ export default function Cart() {
             </Link>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 sm:gap-4 lg:gap-6">
             <ProfileMenu />
 
             <button
@@ -351,7 +321,7 @@ export default function Cart() {
               aria-label="Search"
               className="transition hover:text-[#ff5a00]"
             >
-              <FiSearch className="h-[24px] w-[24px]" />
+              <FiSearch className="h-[20px] w-[20px] sm:h-[24px] sm:w-[24px]" />
             </button>
 
             <Link
@@ -359,7 +329,7 @@ export default function Cart() {
               aria-label="Cart"
               className="relative text-[#ff5a00]"
             >
-              <FiShoppingCart className="h-[25px] w-[25px]" />
+              <FiShoppingCart className="h-[21px] w-[21px] sm:h-[25px] sm:w-[25px]" />
 
               {totalItems > 0 && (
                 <span className="absolute -right-2 -top-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#ff5a00] px-1 text-[10px] font-bold text-white">
@@ -373,14 +343,14 @@ export default function Cart() {
 
       {/* CONTENT */}
 
-      <section className="mx-auto w-full max-w-[1500px] px-8 py-12 lg:px-10">
+      <section className="mx-auto w-full max-w-[1500px] px-4 py-8 sm:px-6 sm:py-10 lg:px-10 lg:py-12">
         {cart.length === 0 ? (
           <div className="flex min-h-[650px] flex-col items-center justify-center">
-            <h1 className="text-[42px] font-bold tracking-[-1.5px]">
+            <h1 className="text-[30px] font-bold tracking-[-1.5px] sm:text-[42px]">
               Your Cart
             </h1>
 
-            <p className="mt-3 text-gray-500">
+            <p className="mt-3 text-center text-gray-500">
               Your cart is currently empty.
             </p>
 
@@ -392,12 +362,12 @@ export default function Cart() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-12 xl:grid-cols-[minmax(0,1fr)_465px]">
+          <div className="grid grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_465px] xl:gap-12">
             {/* LEFT SIDE */}
 
             <div>
-              <div className="mb-8 flex items-center justify-between">
-                <div className="flex items-center gap-5">
+              <div className="mb-6 flex items-center justify-between gap-4 sm:mb-8">
+                <div className="flex min-w-0 items-center gap-3 sm:gap-5">
                   <button
                     type="button"
                     onClick={
@@ -410,7 +380,7 @@ export default function Cart() {
                         ? 'Deselect all items'
                         : 'Select all items'
                     }
-                    className={`flex h-[30px] w-[30px] items-center justify-center rounded-full border ${
+                    className={`flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full border sm:h-[30px] sm:w-[30px] ${
                       allSelected
                         ? 'border-[#ff5a00] bg-[#ff5a00]'
                         : 'border-black bg-white'
@@ -423,7 +393,7 @@ export default function Cart() {
                     )}
                   </button>
 
-                  <h1 className="text-[40px] font-bold tracking-[-1.5px]">
+                  <h1 className="text-[30px] font-bold tracking-[-1.5px] sm:text-[40px]">
                     Your Cart
                   </h1>
                 </div>
@@ -431,10 +401,10 @@ export default function Cart() {
                 <button
                   type="button"
                   onClick={deleteAll}
-                  className="flex items-center gap-3 text-[17px] text-red-500 transition hover:text-red-700"
+                  className="flex shrink-0 items-center gap-2 text-[14px] text-red-500 transition hover:text-red-700 sm:gap-3 sm:text-[17px]"
                 >
                   <FiTrash2 className="h-5 w-5" />
-                  Delete All
+                  <span>Delete All</span>
                 </button>
               </div>
 
@@ -457,16 +427,16 @@ export default function Cart() {
                   return (
                     <article
                       key={item.cartId}
-                      className={`py-5 ${
+                      className={`relative py-5 ${
                         index !== cart.length - 1
                           ? 'border-b border-dashed border-[#cfcfcf]'
                           : ''
                       }`}
                     >
-                      <div className="flex gap-6">
+                      <div className="relative flex flex-col gap-5 sm:flex-row sm:gap-6">
                         {/* SELECTION */}
 
-                        <div className="flex items-center">
+                        <div className="absolute left-0 top-1 z-10 flex items-center sm:static">
                           <button
                             type="button"
                             onClick={() =>
@@ -495,7 +465,7 @@ export default function Cart() {
 
                         {/* IMAGE */}
 
-                        <div className="flex h-[170px] w-[170px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#eeeeee]">
+                        <div className="ml-10 flex h-[190px] w-[calc(100%-40px)] max-w-[240px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#eeeeee] sm:ml-0 sm:h-[170px] sm:w-[170px]">
                           <img
                             src={item.image}
                             alt={item.name}
@@ -506,10 +476,10 @@ export default function Cart() {
                         {/* DETAILS */}
 
                         <div className="flex min-w-0 flex-1 flex-col">
-                          <div className="flex items-start justify-between gap-6">
-                            <div>
+                          <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:gap-6">
+                            <div className="min-w-0">
                               <span
-                                className={`inline-flex rounded-full border px-4 py-2 text-[14px] font-semibold ${
+                                className={`inline-flex rounded-full border px-3 py-1.5 text-[13px] font-semibold sm:px-4 sm:py-2 sm:text-[14px] ${
                                   isTailored
                                     ? 'border-[#ff5a00] text-[#ff5a00]'
                                     : 'border-[#999999] text-[#555555]'
@@ -520,19 +490,19 @@ export default function Cart() {
                                   : 'Plain'}
                               </span>
 
-                              <h2 className="mt-4 text-[27px] font-bold tracking-[-0.7px]">
+                              <h2 className="mt-3 text-[23px] font-bold leading-tight tracking-[-0.7px] sm:mt-4 sm:text-[27px]">
                                 {item.name}
                               </h2>
                             </div>
 
-                            <p className="whitespace-nowrap text-[27px] font-semibold">
+                            <p className="whitespace-nowrap text-[23px] font-semibold sm:text-[27px]">
                               {formatPrice(
                                 item.totalPrice,
                               )}
                             </p>
                           </div>
 
-                          <div className="mt-3 space-y-1 text-[17px]">
+                          <div className="mt-3 space-y-1 text-[15px] sm:text-[17px]">
                             <p>
                               <span className="font-semibold">
                                 Color:
@@ -601,8 +571,8 @@ export default function Cart() {
                               )}
                           </div>
 
-                          <div className="mt-auto flex items-end justify-between pt-5">
-                            <div className="flex items-center gap-3">
+                          <div className="mt-5 flex items-center justify-between gap-4 pt-2 sm:mt-auto sm:items-end sm:pt-5">
+                            <div className="flex items-center gap-2 sm:gap-3">
                               <button
                                 type="button"
                                 onClick={() =>
@@ -661,12 +631,12 @@ export default function Cart() {
             {/* SUMMARY */}
 
             <aside>
-              <h2 className="mb-8 text-[40px] font-bold tracking-[-1.5px]">
+              <h2 className="mb-6 text-[30px] font-bold tracking-[-1.5px] sm:mb-8 sm:text-[40px]">
                 Summary
               </h2>
 
-              <div className="rounded-[12px] border border-[#d8d8d8] p-6">
-                <div className="flex items-center justify-between text-[18px]">
+              <div className="rounded-[12px] border border-[#d8d8d8] p-4 sm:p-6">
+                <div className="flex items-center justify-between gap-4 text-[16px] sm:text-[18px]">
                   <span className="font-semibold">
                     Total Items
                   </span>
@@ -679,7 +649,7 @@ export default function Cart() {
                   </span>
                 </div>
 
-                <div className="mt-5 flex items-center justify-between text-[18px]">
+                <div className="mt-4 flex items-center justify-between gap-4 text-[16px] sm:mt-5 sm:text-[18px]">
                   <span className="font-semibold">
                     Subtotal
                   </span>
@@ -689,7 +659,7 @@ export default function Cart() {
                   </span>
                 </div>
 
-                <div className="mt-5 flex items-center justify-between text-[18px]">
+                <div className="mt-4 flex items-center justify-between gap-4 text-[16px] sm:mt-5 sm:text-[18px]">
                   <span className="font-semibold">
                     Delivery Fee
                   </span>
@@ -701,17 +671,17 @@ export default function Cart() {
 
                 <div className="my-6 border-t border-dashed border-[#bdbdbd]" />
 
-                <div className="flex items-center justify-between">
-                  <span className="text-[26px] font-bold">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[21px] font-bold sm:text-[26px]">
                     Final Payment
                   </span>
 
-                  <span className="text-[28px] font-bold text-[#ff5a00]">
+                  <span className="text-[23px] font-bold text-[#ff5a00] sm:text-[28px]">
                     {formatPrice(finalPayment)}
                   </span>
                 </div>
 
-                <div className="mt-7 flex h-[58px] overflow-hidden rounded-[12px] border-2 border-[#d8d8d8]">
+                <div className="mt-6 flex h-[54px] overflow-hidden rounded-[12px] border-2 border-[#d8d8d8] sm:mt-7 sm:h-[58px]">
                   <input
                     type="text"
                     value={promoCode}
@@ -722,13 +692,13 @@ export default function Cart() {
                       setPromoMessage('')
                     }}
                     placeholder="Enter Promo Code"
-                    className="min-w-0 flex-1 px-4 text-[17px] outline-none"
+                    className="min-w-0 flex-1 px-3 text-[15px] outline-none sm:px-4 sm:text-[17px]"
                   />
 
                   <button
                     type="button"
                     onClick={applyPromoCode}
-                    className="m-1 w-[82px] rounded-[11px] bg-[#ff5a00] text-[17px] font-medium text-white transition hover:bg-[#e95000]"
+                    className="m-1 w-[78px] shrink-0 rounded-[11px] bg-[#ff5a00] text-[14px] font-medium text-white transition hover:bg-[#e95000] sm:w-[82px] sm:text-[17px]"
                   >
                     APPLY
                   </button>
@@ -750,7 +720,7 @@ export default function Cart() {
                   selectedCartItems.length ===
                   0
                 }
-                className="mt-5 h-[60px] w-full rounded-[11px] bg-[#ff5a00] text-[20px] font-semibold text-white transition hover:bg-[#e95000] disabled:cursor-not-allowed disabled:bg-[#cccccc]"
+                className="mt-5 h-[56px] w-full rounded-[11px] bg-[#ff5a00] text-[18px] font-semibold text-white transition hover:bg-[#e95000] disabled:cursor-not-allowed disabled:bg-[#cccccc] sm:h-[60px] sm:text-[20px]"
               >
                 CHECKOUT
               </button>
@@ -759,7 +729,7 @@ export default function Cart() {
 
               <Link
                 to="/catalog"
-                className="mt-4 flex h-[60px] w-full items-center justify-center rounded-[11px] border border-black text-[20px] font-medium transition hover:bg-black hover:text-white"
+                className="mt-4 flex h-[56px] w-full items-center justify-center rounded-[11px] border border-black text-[18px] font-medium transition hover:bg-black hover:text-white sm:h-[60px] sm:text-[20px]"
               >
                 Continue Shopping
               </Link>
