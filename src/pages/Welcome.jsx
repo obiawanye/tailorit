@@ -305,7 +305,7 @@ export default function Welcome() {
 
                 <Stat
                   value="2+"
-                  label="Year of experience"
+                  label="Years of experience"
                 />
 
                 <Stat
