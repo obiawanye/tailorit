@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { useUser } from '@clerk/react'
+import { useAuth, useUser } from '@clerk/react'
 import {
   FiSearch,
   FiShoppingCart,
@@ -13,7 +13,15 @@ const formatPrice = (price) =>
   `₦${Number(price || 0).toLocaleString()}`
 
 const formatDate = (dateString) => {
+  if (!dateString) {
+    return 'N/A'
+  }
+
   const date = new Date(dateString)
+
+  if (Number.isNaN(date.getTime())) {
+    return 'N/A'
+  }
 
   const day = String(date.getDate()).padStart(
     2,
@@ -41,15 +49,114 @@ const getTodayAtMidnight = () => {
   )
 }
 
-const getOrderStatus = (deliveryDate) => {
-  if (!deliveryDate) {
+const getEstimatedDeliveryDate = (
+  createdAt,
+) => {
+  if (!createdAt) {
+    return null
+  }
+
+  const deliveryDate = new Date(createdAt)
+
+  if (Number.isNaN(deliveryDate.getTime())) {
+    return null
+  }
+
+  deliveryDate.setDate(
+    deliveryDate.getDate() + 10,
+  )
+
+  return deliveryDate.toISOString()
+}
+
+const getOrderStatus = (
+  orderStatus,
+  deliveryDate,
+) => {
+  const normalizedStatus =
+    typeof orderStatus === 'string'
+      ? orderStatus.toLowerCase()
+      : ''
+
+  if (
+    normalizedStatus === 'delivered'
+  ) {
     return {
-      label: 'Delivery date unavailable',
+      label: `Delivered: ${formatDate(
+        deliveryDate,
+      )}`,
+      delivered: true,
+    }
+  }
+
+  if (
+    normalizedStatus === 'shipped'
+  ) {
+    return {
+      label: `To be delivered: ${formatDate(
+        deliveryDate,
+      )}`,
       delivered: false,
     }
   }
 
-  const delivery = new Date(deliveryDate)
+  if (
+    normalizedStatus === 'processing'
+  ) {
+    return {
+      label: `To be delivered: ${formatDate(
+        deliveryDate,
+      )}`,
+      delivered: false,
+    }
+  }
+
+  if (
+    normalizedStatus === 'paid'
+  ) {
+    return {
+      label: `To be delivered: ${formatDate(
+        deliveryDate,
+      )}`,
+      delivered: false,
+    }
+  }
+
+  if (
+    normalizedStatus === 'pending'
+  ) {
+    return {
+      label: 'Order processing',
+      delivered: false,
+    }
+  }
+
+  if (
+    normalizedStatus === 'cancelled'
+  ) {
+    return {
+      label: 'Order cancelled',
+      delivered: false,
+    }
+  }
+
+  if (!deliveryDate) {
+    return {
+      label: 'Order processing',
+      delivered: false,
+    }
+  }
+
+  const delivery = new Date(
+    deliveryDate,
+  )
+
+  if (Number.isNaN(delivery.getTime())) {
+    return {
+      label: 'Order processing',
+      delivered: false,
+    }
+  }
 
   const deliveryDay = new Date(
     delivery.getFullYear(),
@@ -73,27 +180,6 @@ const getOrderStatus = (deliveryDate) => {
       deliveryDate,
     )}`,
     delivered: false,
-  }
-}
-
-const getSavedOrders = () => {
-  try {
-    const savedOrders = JSON.parse(
-      localStorage.getItem(
-        'tailorit-orders',
-      ) || '[]',
-    )
-
-    return Array.isArray(savedOrders)
-      ? savedOrders
-      : []
-  } catch (error) {
-    console.error(
-      'Failed to load orders:',
-      error,
-    )
-
-    return []
   }
 }
 
@@ -150,17 +236,85 @@ const getProductCategory = (item) => {
 }
 
 const getItemPrice = (item) => {
+  const unitPrice =
+    Number(
+      item.totalPrice ??
+        item.unitPrice ??
+        0,
+    )
+
   return (
-    Number(item.totalPrice || 0) *
+    unitPrice *
     Number(item.quantity || 1)
   )
 }
 
-export default function MyOrders() {
-  const { isSignedIn } = useUser()
+const getCustomizationText = (
+  customization,
+) => {
+  if (
+    typeof customization?.nameText ===
+      'string' &&
+    customization.nameText.trim()
+  ) {
+    return customization.nameText.trim()
+  }
 
-  const [orders] =
-    useState(getSavedOrders)
+  if (
+    typeof customization?.text ===
+      'string' &&
+    customization.text.trim()
+  ) {
+    return customization.text.trim()
+  }
+
+  return ''
+}
+
+const isCustomizedItem = (item) => {
+  const customization =
+    item.customization || {}
+
+  const nameText =
+    getCustomizationText(
+      customization,
+    )
+
+  const pattern =
+    typeof customization.pattern ===
+    'string'
+      ? customization.pattern
+      : 'none'
+
+  const graphic =
+    typeof customization.graphic ===
+    'string'
+      ? customization.graphic
+      : 'none'
+
+  return Boolean(
+    nameText ||
+      (pattern &&
+        pattern !== 'none') ||
+      (graphic &&
+        graphic !== 'none'),
+  )
+}
+
+export default function MyOrders() {
+  const { isSignedIn, getToken } =
+    useAuth()
+
+  const { isLoaded } = useUser()
+
+  const [orders, setOrders] =
+    useState([])
+
+  const [isLoading, setIsLoading] =
+    useState(true)
+
+  const [loadError, setLoadError] =
+    useState('')
 
   const [category, setCategory] =
     useState('all')
@@ -183,9 +337,124 @@ export default function MyOrders() {
   const [showSearch, setShowSearch] =
     useState(false)
 
+  useEffect(() => {
+    let isMounted = true
+
+    const loadOrders = async () => {
+      if (!isLoaded) {
+        return
+      }
+
+      if (!isSignedIn) {
+        if (isMounted) {
+          setOrders([])
+          setIsLoading(false)
+        }
+
+        return
+      }
+
+      try {
+        if (isMounted) {
+          setIsLoading(true)
+          setLoadError('')
+        }
+
+        const token = await getToken()
+
+        if (!token) {
+          throw new Error(
+            'Your session has expired. Please sign in again.',
+          )
+        }
+
+        const response = await fetch(
+          '/api/orders',
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type':
+                'application/json',
+            },
+          },
+        )
+
+        const responseText =
+          await response.text()
+
+        let data = {}
+
+        try {
+          data = responseText
+            ? JSON.parse(responseText)
+            : {}
+        } catch {
+          console.error(
+            'Invalid response from /api/orders:',
+            responseText,
+          )
+
+          throw new Error(
+            `Order service returned an invalid response (${response.status}).`,
+          )
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ||
+              'Failed to load your orders.',
+          )
+        }
+
+        if (
+          !Array.isArray(data.orders)
+        ) {
+          throw new Error(
+            'The order service returned invalid order data.',
+          )
+        }
+
+        if (isMounted) {
+          setOrders(data.orders)
+        }
+      } catch (error) {
+        console.error(
+          'Failed to load orders:',
+          error,
+        )
+
+        if (isMounted) {
+          setLoadError(
+            error instanceof Error
+              ? error.message
+              : 'Failed to load your orders. Please try again.',
+          )
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    loadOrders()
+
+    return () => {
+      isMounted = false
+    }
+  }, [
+    isLoaded,
+    isSignedIn,
+    getToken,
+  ])
+
   /*
-   * Flatten all orders into individual product rows.
-   * Each purchased product gets its own row.
+   * Flatten all orders into individual
+   * product rows.
+   *
+   * Each purchased product gets its
+   * own row.
    */
   const orderItems = useMemo(() => {
     return orders.flatMap((order) => {
@@ -195,14 +464,30 @@ export default function MyOrders() {
         ? order.items
         : []
 
+      const deliveryDate =
+        order.deliveryDate ||
+        getEstimatedDeliveryDate(
+          order.createdAt,
+        )
+
       return items.map((item, index) => ({
         ...item,
+
         orderNumber:
           order.orderNumber,
+
         orderDate:
+          order.createdAt ||
           order.orderDate,
-        deliveryDate:
-          order.deliveryDate,
+
+        deliveryDate,
+
+        orderStatus:
+          order.status,
+
+        paymentStatus:
+          order.paymentStatus,
+
         orderIndex: index,
       }))
     })
@@ -212,6 +497,7 @@ export default function MyOrders() {
     let filtered = [...orderItems]
 
     /* CATEGORY FILTER */
+
     if (category !== 'all') {
       filtered = filtered.filter(
         (item) =>
@@ -221,17 +507,12 @@ export default function MyOrders() {
     }
 
     /* TYPE FILTER */
+
     if (type !== 'all') {
       filtered = filtered.filter(
         (item) => {
           const isCustomized =
-            Boolean(
-              item.customization?.text,
-            ) ||
-            item.customization
-              ?.pattern !== 'none' ||
-            item.customization
-              ?.graphic !== 'none'
+            isCustomizedItem(item)
 
           return type === 'customized'
             ? isCustomized
@@ -241,11 +522,15 @@ export default function MyOrders() {
     }
 
     /* PRICE FILTER */
+
     filtered = filtered.filter(
       (item) => {
-        const price = Number(
-          item.totalPrice || 0,
-        )
+        const price =
+          Number(
+            item.totalPrice ??
+              item.unitPrice ??
+              0,
+          )
 
         return (
           price >= minPrice &&
@@ -255,6 +540,7 @@ export default function MyOrders() {
     )
 
     /* SEARCH */
+
     if (search.trim()) {
       const searchTerm =
         search.trim().toLowerCase()
@@ -265,43 +551,75 @@ export default function MyOrders() {
             item.name?.toLowerCase() ||
             ''
 
-          return name.includes(
-            searchTerm,
+          const orderNumber =
+            item.orderNumber
+              ?.toLowerCase() || ''
+
+          return (
+            name.includes(searchTerm) ||
+            orderNumber.includes(
+              searchTerm,
+            )
           )
         },
       )
     }
 
     /* SORT */
+
     if (sortBy === 'price-low') {
       filtered.sort(
         (a, b) =>
-          Number(a.totalPrice || 0) -
-          Number(b.totalPrice || 0),
+          Number(
+            a.totalPrice ??
+              a.unitPrice ??
+              0,
+          ) -
+          Number(
+            b.totalPrice ??
+              b.unitPrice ??
+              0,
+          ),
       )
     }
 
     if (sortBy === 'price-high') {
       filtered.sort(
         (a, b) =>
-          Number(b.totalPrice || 0) -
-          Number(a.totalPrice || 0),
+          Number(
+            b.totalPrice ??
+              b.unitPrice ??
+              0,
+          ) -
+          Number(
+            a.totalPrice ??
+              a.unitPrice ??
+              0,
+          ),
       )
     }
 
     if (sortBy === 'newest') {
       filtered.sort(
         (a, b) =>
-          new Date(b.orderDate) -
-          new Date(a.orderDate),
+          new Date(
+            b.orderDate,
+          ) -
+          new Date(
+            a.orderDate,
+          ),
       )
     }
 
     if (sortBy === 'oldest') {
       filtered.sort(
         (a, b) =>
-          new Date(a.orderDate) -
-          new Date(b.orderDate),
+          new Date(
+            a.orderDate,
+          ) -
+          new Date(
+            b.orderDate,
+          ),
       )
     }
 
@@ -527,8 +845,39 @@ export default function MyOrders() {
           {/* ORDERS */}
 
           <section className="min-w-0">
-            {filteredItems.length ===
-            0 ? (
+            {isLoading ? (
+              <div className="flex min-h-[500px] flex-col items-center justify-center text-center">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#eeeeee] border-t-[#ff5a00]" />
+
+                <h1 className="mt-6 text-[28px] font-bold">
+                  Loading your orders...
+                </h1>
+
+                <p className="mt-2 text-gray-500">
+                  Getting your orders from TailorIt.
+                </p>
+              </div>
+            ) : loadError ? (
+              <div className="flex min-h-[500px] flex-col items-center justify-center text-center">
+                <h1 className="text-[32px] font-bold">
+                  We couldn't load your orders
+                </h1>
+
+                <p className="mt-3 max-w-[500px] text-gray-500">
+                  {loadError}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.location.reload()
+                  }
+                  className="mt-7 rounded-[8px] bg-[#ff5a00] px-8 py-3 font-semibold text-white"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : filteredItems.length === 0 ? (
               <div className="flex min-h-[500px] flex-col items-center justify-center text-center">
                 <h1 className="text-[32px] font-bold">
                   No orders found
@@ -558,6 +907,7 @@ export default function MyOrders() {
                   (item, index) => {
                     const status =
                       getOrderStatus(
+                        item.orderStatus,
                         item.deliveryDate,
                       )
 
@@ -566,9 +916,26 @@ export default function MyOrders() {
                         item.quantity || 1,
                       )
 
+                    const customization =
+                      item.customization ||
+                      {}
+
+                    const customizationText =
+                      getCustomizationText(
+                        customization,
+                      )
+
+                    const pattern =
+                      customization.pattern ||
+                      'none'
+
+                    const graphic =
+                      customization.graphic ||
+                      'none'
+
                     return (
                       <article
-                        key={`${item.orderNumber}-${item.cartId}-${index}`}
+                        key={`${item.orderNumber}-${item.cartItemId || item.productId}-${index}`}
                         className="flex flex-col gap-6 border-b border-dashed border-[#cfcfcf] py-5 md:flex-row md:items-center"
                       >
                         {/* PRODUCT IMAGE */}
@@ -597,89 +964,56 @@ export default function MyOrders() {
                               <span className="font-semibold">
                                 Color:
                               </span>{' '}
-                              {item
-                                .customization
-                                ?.color ||
+                              {customization.color ||
                                 'Orange'}
                             </p>
 
-                            {item
-                              .customization
-                              ?.text && (
+                            {customizationText && (
                               <>
-                                <span className="font-semibold">
-                                  Name:
-                                </span>{' '}
-                                {
-                                  item
-                                    .customization
-                                    .text
-                                }
+                                <p>
+                                  <span className="font-semibold">
+                                    Name:
+                                  </span>{' '}
+                                  {
+                                    customizationText
+                                  }
+                                </p>
                               </>
                             )}
 
-                            {item
-                              .customization
-                              ?.text &&
-                              item
-                                .customization
-                                ?.pattern !==
+                            {pattern &&
+                              pattern !==
                                 'none' && (
-                                <span className="mx-2">
-                                  •
-                                </span>
-                              )}
-
-                            {item
-                              .customization
-                              ?.pattern &&
-                              item
-                                .customization
-                                .pattern !==
-                                'none' && (
-                                <span>
+                                <p>
                                   <span className="font-semibold">
                                     Pattern:
                                   </span>{' '}
-                                  {
-                                    item
-                                      .customization
-                                      .pattern
-                                  }
-                                </span>
+                                  {pattern}
+                                </p>
                               )}
 
-                            {item
-                              .customization
-                              ?.pattern !==
-                              'none' &&
-                              item
-                                .customization
-                                ?.graphic !==
+                            {graphic &&
+                              graphic !==
                                 'none' && (
-                                <span className="mx-2">
-                                  •
-                                </span>
-                              )}
-
-                            {item
-                              .customization
-                              ?.graphic &&
-                              item
-                                .customization
-                                .graphic !==
-                                'none' && (
-                                <span>
+                                <p>
                                   <span className="font-semibold">
                                     Graphic:
                                   </span>{' '}
-                                  {
-                                    item
-                                      .customization
-                                      .graphic
-                                  }
-                                </span>
+                                  {graphic}
+                                </p>
                               )}
+
+                            <p className="mt-2 text-sm text-gray-500">
+                              Order #{' '}
+                              {item.orderNumber}
+                            </p>
+
+                            <p className="text-sm text-gray-500">
+                              Ordered:{' '}
+                              {formatDate(
+                                item.orderDate,
+                              )}
+                            </p>
                           </div>
                         </div>
 
@@ -696,8 +1030,7 @@ export default function MyOrders() {
 
                           <p className="text-[15px]">
                             {quantity}{' '}
-                            {quantity ===
-                            1
+                            {quantity === 1
                               ? 'item'
                               : 'items'}
                           </p>

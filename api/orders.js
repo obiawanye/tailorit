@@ -59,21 +59,6 @@ const VALID_COLORS = new Set([
   'purple',
 ])
 
-/*
- * Pattern IDs used by the frontend.
- *
- * The frontend can use either:
- *
- * none
- * plain
- * camo
- * chevron
- * abstract
- *
- * or combined pattern IDs such as:
- *
- * abstract-white
- */
 const VALID_PATTERNS = new Set([
   'none',
   'plain',
@@ -189,19 +174,6 @@ function calculateItemPrice(item) {
           .toLowerCase()
       : 'none'
 
-  console.log(
-    'ORDER CUSTOMIZATION DEBUG:',
-    {
-      productId,
-      rawCustomization: customization,
-      nameText,
-      color,
-      rawPattern,
-      normalizedPattern: pattern,
-      graphic,
-    },
-  )
-
   if (nameText.length > MAX_TEXT_LENGTH) {
     throw new Error(
       `Custom text cannot exceed ${MAX_TEXT_LENGTH} characters`,
@@ -226,40 +198,18 @@ function calculateItemPrice(item) {
     )
   }
 
-  /*
-   * Name text
-   */
   const nameTextPrice = nameText
     ? CUSTOMIZATION_PRICES.nameText
     : 0
 
-  /*
-   * Color
-   *
-   * Every product currently has a selected
-   * customization color, so this matches
-   * the existing TailorIt pricing logic.
-   */
   const colorPrice =
     CUSTOMIZATION_PRICES.color
 
-  /*
-   * Pattern
-   *
-   * "none" means no pattern charge.
-   *
-   * Combined IDs such as "abstract-white"
-   * are valid patterns and receive the
-   * pattern customization charge.
-   */
   const patternPrice =
     pattern !== 'none'
       ? CUSTOMIZATION_PRICES.pattern
       : 0
 
-  /*
-   * Graphic
-   */
   const graphicPrice =
     graphic !== 'none'
       ? CUSTOMIZATION_PRICES.graphic
@@ -371,262 +321,307 @@ function validateShippingAddress(
   }
 }
 
+async function authenticateRequest(req) {
+  const authorization =
+    req.headers.authorization
+
+  if (
+    !authorization?.startsWith('Bearer ')
+  ) {
+    throw new Error('Unauthorized')
+  }
+
+  const token = authorization
+    .replace('Bearer ', '')
+    .trim()
+
+  if (!token) {
+    throw new Error('Unauthorized')
+  }
+
+  const verifiedToken =
+    await verifyToken(token, {
+      secretKey:
+        process.env.CLERK_SECRET_KEY,
+    })
+
+  const userId =
+    verifiedToken.sub
+
+  if (!userId) {
+    throw new Error(
+      'Invalid authentication token',
+    )
+  }
+
+  return userId
+}
+
+async function getUserOrders(userId) {
+  const snapshot =
+    await db
+      .collection('orders')
+      .where('userId', '==', userId)
+      .get()
+
+  const orders = snapshot.docs.map(
+    (document) => ({
+      id: document.id,
+      ...document.data(),
+    }),
+  )
+
+  orders.sort((a, b) => {
+    const dateA = new Date(
+      a.createdAt || 0,
+    ).getTime()
+
+    const dateB = new Date(
+      b.createdAt || 0,
+    ).getTime()
+
+    return dateB - dateA
+  })
+
+  return orders
+}
+
+async function createOrder(
+  req,
+  res,
+  userId,
+) {
+  const user =
+    await clerk.users.getUser(userId)
+
+  const {
+    items,
+    shippingAddress,
+  } = req.body || {}
+
+  if (
+    !Array.isArray(items) ||
+    items.length === 0
+  ) {
+    return res.status(400).json({
+      error:
+        'Order must contain at least one item',
+    })
+  }
+
+  if (items.length > 50) {
+    return res.status(400).json({
+      error:
+        'Order contains too many items',
+    })
+  }
+
+  let validatedShippingAddress
+
+  try {
+    validatedShippingAddress =
+      validateShippingAddress(
+        shippingAddress,
+      )
+  } catch (error) {
+    return res.status(400).json({
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Invalid shipping address',
+    })
+  }
+
+  let calculatedItems
+
+  try {
+    calculatedItems =
+      items.map(calculateItemPrice)
+  } catch (error) {
+    console.error(
+      'ORDER ITEM VALIDATION ERROR:',
+      error,
+    )
+
+    return res.status(400).json({
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Invalid order item',
+    })
+  }
+
+  const baseSubtotal =
+    calculatedItems.reduce(
+      (sum, item) =>
+        sum +
+        item.basePrice *
+          item.quantity,
+      0,
+    )
+
+  const customizationTotal =
+    calculatedItems.reduce(
+      (sum, item) => {
+        const customizationPerUnit =
+          item.customizationPrices
+            .nameText +
+          item.customizationPrices
+            .color +
+          item.customizationPrices
+            .pattern +
+          item.customizationPrices
+            .graphic
+
+        return (
+          sum +
+          customizationPerUnit *
+            item.quantity
+        )
+      },
+      0,
+    )
+
+  const subtotal =
+    baseSubtotal +
+    customizationTotal
+
+  const deliveryFee =
+    DELIVERY_FEE
+
+  const total =
+    subtotal +
+    deliveryFee
+
+  const orderNumber =
+    `TT-${Date.now()
+      .toString()
+      .slice(-8)}`
+
+  const orderRef =
+    db.collection('orders').doc()
+
+  const now =
+    new Date().toISOString()
+
+  const orderData = {
+    orderNumber,
+
+    userId,
+
+    customer: {
+      firstName:
+        user.firstName || '',
+
+      lastName:
+        user.lastName || '',
+
+      email:
+        user.primaryEmailAddress
+          ?.emailAddress ||
+        user.emailAddresses?.[0]
+          ?.emailAddress ||
+        '',
+    },
+
+    items: calculatedItems,
+
+    shippingAddress:
+      validatedShippingAddress,
+
+    subtotal,
+
+    baseSubtotal,
+
+    customizationTotal,
+
+    deliveryFee,
+
+    total,
+
+    currency: 'NGN',
+
+    status: 'pending',
+
+    paymentStatus: 'unpaid',
+
+    paymentReference: null,
+
+    createdAt: now,
+
+    updatedAt: now,
+  }
+
+  await orderRef.set(orderData)
+
+  return res.status(201).json({
+    success: true,
+
+    order: {
+      id: orderRef.id,
+      ...orderData,
+    },
+  })
+}
+
 export default async function handler(
   req,
   res,
 ) {
-  if (req.method !== 'POST') {
+  try {
+    const userId =
+      await authenticateRequest(req)
+
+    if (req.method === 'GET') {
+      const orders =
+        await getUserOrders(userId)
+
+      return res.status(200).json({
+        success: true,
+        orders,
+      })
+    }
+
+    if (req.method === 'POST') {
+      return await createOrder(
+        req,
+        res,
+        userId,
+      )
+    }
+
     return res.status(405).json({
       error: 'Method not allowed',
     })
-  }
-
-  try {
-    // 1. GET CLERK SESSION TOKEN
-
-    const authorization =
-      req.headers.authorization
+  } catch (error) {
+    console.error(
+      'ORDER API ERROR:',
+      error,
+    )
 
     if (
-      !authorization?.startsWith('Bearer ')
+      error instanceof Error &&
+      error.message === 'Unauthorized'
     ) {
       return res.status(401).json({
         error: 'Unauthorized',
       })
     }
 
-    const token = authorization
-      .replace('Bearer ', '')
-      .trim()
-
-    if (!token) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-      })
-    }
-
-    // 2. VERIFY CLERK SESSION
-
-    const verifiedToken =
-      await verifyToken(token, {
-        secretKey:
-          process.env.CLERK_SECRET_KEY,
-      })
-
-    const userId =
-      verifiedToken.sub
-
-    if (!userId) {
+    if (
+      error instanceof Error &&
+      error.message ===
+        'Invalid authentication token'
+    ) {
       return res.status(401).json({
         error:
           'Invalid authentication token',
       })
     }
 
-    // 3. GET CLERK USER
-
-    const user =
-      await clerk.users.getUser(userId)
-
-    // 4. GET REQUEST BODY
-
-    const {
-      items,
-      shippingAddress,
-    } = req.body || {}
-
-    // 5. VALIDATE ITEMS
-
-    if (
-      !Array.isArray(items) ||
-      items.length === 0
-    ) {
-      return res.status(400).json({
-        error:
-          'Order must contain at least one item',
-      })
-    }
-
-    if (items.length > 50) {
-      return res.status(400).json({
-        error:
-          'Order contains too many items',
-      })
-    }
-
-    // 6. VALIDATE SHIPPING ADDRESS
-
-    let validatedShippingAddress
-
-    try {
-      validatedShippingAddress =
-        validateShippingAddress(
-          shippingAddress,
-        )
-    } catch (error) {
-      return res.status(400).json({
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Invalid shipping address',
-      })
-    }
-
-    // 7. CALCULATE EACH ITEM SERVER-SIDE
-
-    let calculatedItems
-
-    try {
-      calculatedItems =
-        items.map(calculateItemPrice)
-    } catch (error) {
-      console.error(
-        'ORDER ITEM VALIDATION ERROR:',
-        error,
-      )
-
-      return res.status(400).json({
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Invalid order item',
-      })
-    }
-
-    // 8. CALCULATE BASE SUBTOTAL
-
-    const baseSubtotal =
-      calculatedItems.reduce(
-        (sum, item) =>
-          sum +
-          item.basePrice *
-            item.quantity,
-        0,
-      )
-
-    // 9. CALCULATE CUSTOMIZATION TOTAL
-
-    const customizationTotal =
-      calculatedItems.reduce(
-        (sum, item) => {
-          const customizationPerUnit =
-            item.customizationPrices
-              .nameText +
-            item.customizationPrices
-              .color +
-            item.customizationPrices
-              .pattern +
-            item.customizationPrices
-              .graphic
-
-          return (
-            sum +
-            customizationPerUnit *
-              item.quantity
-          )
-        },
-        0,
-      )
-
-    // 10. CALCULATE FINAL TOTAL
-
-    const subtotal =
-      baseSubtotal +
-      customizationTotal
-
-    const deliveryFee =
-      DELIVERY_FEE
-
-    const total =
-      subtotal +
-      deliveryFee
-
-    // 11. GENERATE ORDER NUMBER
-
-    const orderNumber =
-      `TT-${Date.now()
-        .toString()
-        .slice(-8)}`
-
-    // 12. CREATE FIRESTORE ORDER
-
-    const orderRef =
-      db.collection('orders').doc()
-
-    const now =
-      new Date().toISOString()
-
-    const orderData = {
-      orderNumber,
-
-      userId,
-
-      customer: {
-        firstName:
-          user.firstName || '',
-
-        lastName:
-          user.lastName || '',
-
-        email:
-          user.primaryEmailAddress
-            ?.emailAddress ||
-          user.emailAddresses?.[0]
-            ?.emailAddress ||
-          '',
-      },
-
-      items: calculatedItems,
-
-      shippingAddress:
-        validatedShippingAddress,
-
-      subtotal,
-
-      baseSubtotal,
-
-      customizationTotal,
-
-      deliveryFee,
-
-      total,
-
-      currency: 'NGN',
-
-      status: 'pending',
-
-      paymentStatus: 'unpaid',
-
-      paymentReference: null,
-
-      createdAt: now,
-
-      updatedAt: now,
-    }
-
-    await orderRef.set(orderData)
-
-    // 13. RETURN CREATED ORDER
-
-    return res.status(201).json({
-      success: true,
-
-      order: {
-        id: orderRef.id,
-        ...orderData,
-      },
-    })
-  } catch (error) {
-    console.error(
-      'ORDER CREATION ERROR:',
-      error,
-    )
-
     return res.status(500).json({
       error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to create order',
+        'Failed to process order request',
     })
   }
 }
