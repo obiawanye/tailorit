@@ -5,6 +5,7 @@ import {
   FiSearch,
   FiShoppingCart,
   FiX,
+  FiMenu,
 } from 'react-icons/fi'
 import ProfileMenu from '../components/ProfileMenu'
 import ProductFilters from '../components/ProductFilters'
@@ -71,48 +72,59 @@ const formatPrice = (price) =>
 
 function ProductCard({ product }) {
   return (
-    <Link
-      to={`/product/${product.id}`}
-      className="group block overflow-hidden border border-black bg-white"
-    >
-      <div className="aspect-square overflow-hidden bg-[#f5f5f5]">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-        />
-      </div>
+    <article className="group block overflow-hidden border border-black bg-white">
+      {/* PRODUCT IMAGE */}
+
+      <Link
+        to={`/product/${product.id}`}
+        className="block"
+        aria-label={`Customize ${product.name}`}
+      >
+        <div className="aspect-square overflow-hidden bg-[#f5f5f5]">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+          />
+        </div>
+      </Link>
+
+      {/* PRODUCT INFO */}
 
       <div className="relative min-h-[96px] bg-black px-3 py-3 pr-20 text-white sm:min-h-[108px] sm:px-4 sm:py-4">
-        <h3 className="max-w-[90%] text-[13px] leading-[1.35] sm:text-[15px]">
-          {product.name}
-        </h3>
+        <Link
+          to={`/product/${product.id}`}
+          className="block"
+          aria-label={`Customize ${product.name}`}
+        >
+          <h3 className="max-w-[90%] text-[13px] leading-[1.35] sm:text-[15px]">
+            {product.name}
+          </h3>
 
-        <div className="mt-2 flex items-center gap-3">
-          <span className="text-[20px] sm:text-[21px]">
-            {formatPrice(product.price)}
-          </span>
+          <div className="mt-2 flex items-center gap-3">
+            <span className="text-[20px] sm:text-[21px]">
+              {formatPrice(product.price)}
+            </span>
 
-          <span className="text-[12px] text-gray-400 line-through sm:text-[13px]">
-            {formatPrice(product.originalPrice)}
-          </span>
-        </div>
+            <span className="text-[12px] text-gray-400 line-through sm:text-[13px]">
+              {formatPrice(product.originalPrice)}
+            </span>
+          </div>
+        </Link>
 
-        <button
-          type="button"
-          aria-label={`Add ${product.name} to cart`}
-          onClick={(event) => {
-            event.preventDefault()
-            event.stopPropagation()
-          }}
+        {/* CUSTOMIZE BUTTON */}
+
+        <Link
+          to={`/product/${product.id}`}
+          aria-label={`Customize ${product.name}`}
           className="absolute right-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white text-black transition duration-150 hover:scale-95 sm:right-4 sm:h-14 sm:w-14"
         >
           <span className="text-[28px] font-light leading-none">
             +
           </span>
-        </button>
+        </Link>
       </div>
-    </Link>
+    </article>
   )
 }
 
@@ -138,6 +150,9 @@ export default function Catalog() {
     useState('')
 
   const [showSearch, setShowSearch] =
+    useState(false)
+
+  const [mobileMenuOpen, setMobileMenuOpen] =
     useState(false)
 
   const clearFilters = () => {
@@ -215,7 +230,8 @@ export default function Catalog() {
       {/* NAVBAR */}
 
       <header className="sticky top-0 z-50 border-b border-[#dddddd] bg-white">
-        <nav className="mx-auto flex h-[92px] w-full items-center justify-between px-5 sm:px-8 lg:px-12">
+        <nav className="mx-auto flex h-[76px] w-full items-center justify-between px-4 sm:h-[84px] sm:px-8 lg:h-[92px] lg:px-12">
+
           {/* LOGO */}
 
           <Link
@@ -225,11 +241,11 @@ export default function Catalog() {
             <img
               src="/assets/TailorIt_Logo.png"
               alt="TailorIt"
-              className="h-[58px] w-[58px] object-contain sm:h-[64px] sm:w-[64px]"
+              className="h-[52px] w-[52px] object-contain sm:h-[64px] sm:w-[64px]"
             />
           </Link>
 
-          {/* NAVIGATION */}
+          {/* DESKTOP NAVIGATION */}
 
           <div className="hidden items-center gap-10 text-[16px] md:flex lg:gap-12">
             <Link
@@ -256,40 +272,7 @@ export default function Catalog() {
 
           {/* RIGHT SIDE */}
 
-          <div className="flex items-center gap-4 sm:gap-6">
-            {/* SEARCH INPUT */}
-
-            {showSearch && (
-              <div className="hidden items-center sm:flex">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(event) =>
-                      setSearchQuery(
-                        event.target.value,
-                      )
-                    }
-                    placeholder="Search products..."
-                    autoFocus
-                    className="w-[180px] border-b border-black bg-transparent px-1 py-2 pr-8 text-sm outline-none placeholder:text-gray-400 lg:w-[220px]"
-                  />
-
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSearchQuery('')
-                      }
-                      aria-label="Clear search"
-                      className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-black"
-                    >
-                      <FiX className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+          <div className="flex items-center gap-3 sm:gap-5 lg:gap-6">
 
             {/* PROFILE / SIGN IN */}
 
@@ -328,8 +311,108 @@ export default function Catalog() {
             >
               <FiShoppingCart className="h-6 w-6" />
             </Link>
+
+            {/* MOBILE HAMBURGER */}
+
+            <button
+              type="button"
+              aria-label={
+                mobileMenuOpen
+                  ? 'Close navigation menu'
+                  : 'Open navigation menu'
+              }
+              aria-expanded={mobileMenuOpen}
+              onClick={() =>
+                setMobileMenuOpen(
+                  (open) => !open,
+                )
+              }
+              className="flex h-9 w-9 items-center justify-center md:hidden"
+            >
+              {mobileMenuOpen ? (
+                <FiX className="h-6 w-6" />
+              ) : (
+                <FiMenu className="h-6 w-6" />
+              )}
+            </button>
           </div>
         </nav>
+
+        {/* MOBILE NAVIGATION */}
+
+        {mobileMenuOpen && (
+          <div className="border-t border-[#dddddd] bg-white md:hidden">
+            <nav className="mx-auto flex w-full flex-col">
+
+              <Link
+                to="/"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="border-b border-[#eeeeee] px-5 py-4 text-[15px] transition hover:bg-[#f7f7f7] hover:text-[#ff5a00]"
+              >
+                Home
+              </Link>
+
+              <Link
+                to="/catalog"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="border-b border-[#eeeeee] px-5 py-4 text-[15px] font-semibold text-[#ff5a00]"
+              >
+                Catalog
+              </Link>
+
+              <Link
+                to="/my-orders"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="px-5 py-4 text-[15px] transition hover:bg-[#f7f7f7] hover:text-[#ff5a00]"
+              >
+                My Orders
+              </Link>
+
+            </nav>
+          </div>
+        )}
+
+        {/* DESKTOP SEARCH INPUT */}
+
+        {showSearch && (
+          <div className="hidden border-t border-[#dddddd] px-5 py-3 sm:block">
+            <div className="mx-auto max-w-[1600px]">
+              <div className="relative w-full sm:max-w-[300px]">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) =>
+                    setSearchQuery(
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Search products..."
+                  autoFocus
+                  className="w-full border-b border-black bg-transparent px-1 py-2 pr-8 text-sm outline-none placeholder:text-gray-400"
+                />
+
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSearchQuery('')
+                    }
+                    aria-label="Clear search"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-black"
+                  >
+                    <FiX className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* MOBILE SEARCH */}
 
@@ -369,6 +452,7 @@ export default function Catalog() {
       {/* CATALOG */}
 
       <section className="mx-auto w-full max-w-[1600px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
+
         {/* HEADING */}
 
         <div className="mb-8 flex items-start justify-between gap-5">
@@ -388,6 +472,7 @@ export default function Catalog() {
         </div>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
+
           {/* REUSABLE FILTERS */}
 
           <ProductFilters
@@ -423,6 +508,7 @@ export default function Catalog() {
             ) : (
               <div className="flex min-h-[460px] items-center justify-center border border-dashed border-[#cfcfcf]">
                 <div className="text-center">
+
                   <h2 className="text-2xl font-bold">
                     No products found
                   </h2>
@@ -438,6 +524,7 @@ export default function Catalog() {
                   >
                     Clear Filters
                   </button>
+
                 </div>
               </div>
             )}

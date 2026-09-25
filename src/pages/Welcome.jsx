@@ -6,6 +6,8 @@ import {
   FiShoppingCart,
   FiArrowLeft,
   FiArrowRight,
+  FiX,
+  FiMenu,
 } from 'react-icons/fi'
 import ProfileMenu from '../components/ProfileMenu'
 
@@ -162,11 +164,17 @@ export default function Welcome() {
   const [activeCategory, setActiveCategory] =
     useState('BAGS')
 
+  const [mobileMenuOpen, setMobileMenuOpen] =
+    useState(false)
+
   const handlePreviousCategory = () => {
     setActiveCategory((currentCategory) => {
-      const currentIndex = categories.indexOf(currentCategory)
+      const currentIndex =
+        categories.indexOf(currentCategory)
+
       const previousIndex =
-        (currentIndex - 1 + categories.length) % categories.length
+        (currentIndex - 1 + categories.length) %
+        categories.length
 
       return categories[previousIndex]
     })
@@ -174,7 +182,9 @@ export default function Welcome() {
 
   const handleNextCategory = () => {
     setActiveCategory((currentCategory) => {
-      const currentIndex = categories.indexOf(currentCategory)
+      const currentIndex =
+        categories.indexOf(currentCategory)
+
       const nextIndex =
         (currentIndex + 1) % categories.length
 
@@ -191,10 +201,13 @@ export default function Welcome() {
     <main className="min-h-dvh overflow-x-hidden bg-[#EAF3F5] text-black">
 
       {/* NAVBAR */}
+
       <header className="sticky left-0 right-0 top-0 z-[100] border-b border-black/30 bg-[#e8ecef]">
-        <div className="mx-auto flex h-[78px] max-w-[1180px] items-center justify-between border-x border-black/30 bg-[#e8ecef] px-5 sm:px-8">
+
+        <div className="mx-auto flex h-[78px] max-w-[1180px] items-center justify-between border-x border-black/30 bg-[#e8ecef] px-5 sm:h-[84px] sm:px-8 lg:h-[92px]">
 
           {/* LOGO */}
+
           <Link
             to="/"
             aria-label="TailorIt home"
@@ -203,12 +216,14 @@ export default function Welcome() {
             <img
               src="/assets/TailorIt_Logo.png"
               alt="TailorIt"
-              className="h-12 w-12 object-contain"
+              className="h-12 w-12 object-contain sm:h-[58px] sm:w-[58px]"
             />
           </Link>
 
-          {/* NAVIGATION */}
-          <nav className="hidden items-center gap-8 text-sm sm:flex">
+          {/* DESKTOP NAVIGATION */}
+
+          <nav className="hidden items-center gap-10 text-[16px] md:flex lg:gap-12">
+
             <Link
               to="/"
               className="font-semibold text-[#ff5a00]"
@@ -218,23 +233,26 @@ export default function Welcome() {
 
             <Link
               to="/catalog"
-              className="transition-colors hover:text-[#ff5a00]"
+              className="transition hover:text-[#ff5a00]"
             >
               Catalog
             </Link>
 
             <Link
               to="/my-orders"
-              className="transition-colors hover:text-[#ff5a00]"
+              className="transition hover:text-[#ff5a00]"
             >
               My Orders
             </Link>
+
           </nav>
 
           {/* RIGHT SIDE */}
-          <div className="flex items-center gap-4">
+
+          <div className="flex items-center gap-3 sm:gap-5 lg:gap-6">
 
             {/* SIGN UP / PROFILE */}
+
             {isSignedIn ? (
               <ProfileMenu />
             ) : (
@@ -253,6 +271,7 @@ export default function Welcome() {
             )}
 
             {/* SEARCH */}
+
             <button
               type="button"
               aria-label="Search"
@@ -262,6 +281,7 @@ export default function Welcome() {
             </button>
 
             {/* CART */}
+
             <Link
               to="/cart"
               aria-label="Cart"
@@ -269,11 +289,79 @@ export default function Welcome() {
             >
               <FiShoppingCart size={22} />
             </Link>
+
+            {/* MOBILE HAMBURGER */}
+
+            <button
+              type="button"
+              aria-label={
+                mobileMenuOpen
+                  ? 'Close navigation menu'
+                  : 'Open navigation menu'
+              }
+              aria-expanded={mobileMenuOpen}
+              onClick={() =>
+                setMobileMenuOpen(
+                  (open) => !open,
+                )
+              }
+              className="flex h-9 w-9 items-center justify-center md:hidden"
+            >
+              {mobileMenuOpen ? (
+                <FiX className="h-6 w-6" />
+              ) : (
+                <FiMenu className="h-6 w-6" />
+              )}
+            </button>
+
           </div>
         </div>
+
+        {/* MOBILE NAVIGATION */}
+
+        {mobileMenuOpen && (
+          <div className="border-t border-black/30 bg-[#e8ecef] md:hidden">
+
+            <nav className="mx-auto flex w-full max-w-[1180px] flex-col border-x border-black/30">
+
+              <Link
+                to="/"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="border-b border-black/20 px-5 py-4 text-[15px] font-semibold text-[#ff5a00] transition hover:bg-[#dde3e6]"
+              >
+                Home
+              </Link>
+
+              <Link
+                to="/catalog"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="border-b border-black/20 px-5 py-4 text-[15px] transition hover:bg-[#dde3e6] hover:text-[#ff5a00]"
+              >
+                Catalog
+              </Link>
+
+              <Link
+                to="/my-orders"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="px-5 py-4 text-[15px] transition hover:bg-[#dde3e6] hover:text-[#ff5a00]"
+              >
+                My Orders
+              </Link>
+
+            </nav>
+          </div>
+        )}
+
       </header>
 
       {/* HERO */}
+
       <section className="border-b border-black/40 bg-[#e8ecef]">
 
         <div className="mx-auto max-w-[1180px] border-x border-black/30 bg-[#e8ecef]">
@@ -281,6 +369,7 @@ export default function Welcome() {
           <div className="grid min-h-[680px] items-center gap-8 px-5 py-12 sm:px-10 sm:py-16 lg:grid-cols-[1fr_1.05fr] lg:gap-0 lg:px-12 lg:py-0">
 
             {/* HERO TEXT */}
+
             <div className="z-10">
 
               <h1 className="max-w-[620px] text-5xl font-black uppercase leading-[0.92] tracking-tight sm:text-6xl lg:text-[70px]">
@@ -301,6 +390,7 @@ export default function Welcome() {
               </Button>
 
               {/* STATS */}
+
               <div className="mt-12 grid max-w-[530px] grid-cols-3 gap-5">
 
                 <Stat
@@ -322,6 +412,7 @@ export default function Welcome() {
             </div>
 
             {/* MODELS */}
+
             <div className="relative flex items-end justify-center self-stretch">
 
               <img
@@ -336,6 +427,7 @@ export default function Welcome() {
       </section>
 
       {/* FEATURE STRIP */}
+
       <section className="border-b border-black/40">
 
         <div className="mx-auto grid max-w-[1180px] grid-cols-2 border-x border-black/30 bg-[#EAF3F5] sm:grid-cols-4">
@@ -365,9 +457,8 @@ export default function Welcome() {
         </div>
       </section>
 
-      {/* =========================================
-          OUR IMPACT
-      ========================================== */}
+      {/* OUR IMPACT */}
+
       <PatternBackground className="border-b border-black/40">
 
         <div className="mx-auto max-w-[1180px] border-x border-black/30 px-5 py-16 sm:px-10 sm:py-20 lg:px-12">
@@ -408,6 +499,7 @@ export default function Welcome() {
       </PatternBackground>
 
       {/* WHAT WE MAKE */}
+
       <PatternBackground className="border-b border-black/40">
 
         <div className="mx-auto max-w-[1180px] border-x border-black/30 px-5 py-16 sm:px-10 sm:py-20 lg:px-12">
@@ -423,6 +515,7 @@ export default function Welcome() {
             </p>
 
             {/* CATEGORY FILTERS */}
+
             <div className="mx-auto mt-7 flex max-w-[720px] items-center justify-center gap-5 overflow-x-auto border-b border-black/50 pb-3 sm:gap-10">
 
               {categories.map((category) => (
@@ -449,6 +542,7 @@ export default function Welcome() {
           </div>
 
           {/* PRODUCT GRID */}
+
           <div className="relative mt-10">
 
             {filteredProducts.length > 0 ? (
@@ -479,6 +573,7 @@ export default function Welcome() {
             )}
 
             {/* PREVIOUS */}
+
             <button
               type="button"
               aria-label="Previous category"
@@ -489,6 +584,7 @@ export default function Welcome() {
             </button>
 
             {/* NEXT */}
+
             <button
               type="button"
               aria-label="Next category"
@@ -501,6 +597,7 @@ export default function Welcome() {
           </div>
 
           {/* MORE PRODUCTS */}
+
           <div className="mt-10 flex justify-center">
 
             <Button>
@@ -512,9 +609,8 @@ export default function Welcome() {
         </div>
       </PatternBackground>
 
-      {/* =========================================
-          FOR THE PLANET
-      ========================================== */}
+      {/* FOR THE PLANET */}
+
       <PatternBackground className="border-b border-black/40">
 
         <div className="mx-auto max-w-[1180px] border-x border-black/30 px-5 py-16 sm:px-10 sm:py-20 lg:px-12">
@@ -531,9 +627,8 @@ export default function Welcome() {
         </div>
       </PatternBackground>
 
-      {/* =========================================
-          FREE DELIVERY
-      ========================================== */}
+      {/* FREE DELIVERY */}
+
       <PatternBackground className="border-b border-black/40">
 
         <div className="mx-auto max-w-[1180px] border-x border-black/30 px-5 py-10 sm:px-10 lg:px-12">
@@ -541,6 +636,7 @@ export default function Welcome() {
           <div className="relative min-h-[280px] overflow-hidden bg-black px-8 py-10 text-white sm:px-12 sm:py-12 lg:min-h-[320px]">
 
             {/* PATTERN */}
+
             <div
               className="pointer-events-none absolute inset-0 opacity-[0.14]"
               style={{
@@ -562,6 +658,7 @@ export default function Welcome() {
             </div>
 
             {/* SHOPPING BAG */}
+
             <img
               src="/assets/Landing/orange-shopping-bag.png"
               alt="TailorIt shopping bag"
@@ -572,9 +669,8 @@ export default function Welcome() {
         </div>
       </PatternBackground>
 
-      {/* =========================================
-          FOOTER
-      ========================================== */}
+      {/* FOOTER */}
+
       <footer className="relative overflow-hidden border-t border-black/40 bg-[#EAF3F5]">
 
         <div
@@ -658,6 +754,7 @@ export default function Welcome() {
         </div>
 
         {/* BOTTOM BLACK BAR */}
+
         <div className="relative h-24 bg-black" />
 
       </footer>

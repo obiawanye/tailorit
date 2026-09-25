@@ -6,6 +6,8 @@ import {
   FiShoppingCart,
   FiArrowLeft,
   FiArrowRight,
+  FiX,
+  FiMenu,
 } from 'react-icons/fi'
 
 import { products } from '../data/products'
@@ -163,10 +165,16 @@ export default function ProductCustomization() {
   const { productId } = useParams()
   const { isSignedIn } = useUser()
 
+  const [mobileMenuOpen, setMobileMenuOpen] =
+    useState(false)
+
   const [customText, setCustomText] = useState('')
-  const [selectedColor, setSelectedColor] = useState('orange')
-  const [selectedPattern, setSelectedPattern] = useState('none')
-  const [selectedGraphic, setSelectedGraphic] = useState('none')
+  const [selectedColor, setSelectedColor] =
+    useState('orange')
+  const [selectedPattern, setSelectedPattern] =
+    useState('none')
+  const [selectedGraphic, setSelectedGraphic] =
+    useState('none')
 
   const product = useMemo(() => {
     return products.find(
@@ -248,6 +256,7 @@ export default function ProductCustomization() {
     return (
       <main className="min-h-screen bg-white text-black">
         <header className="sticky top-0 z-50 border-b border-[#dddddd] bg-white">
+
           <nav className="mx-auto flex h-[86px] w-full items-center justify-between px-5 sm:px-8 lg:px-12">
 
             <Link
@@ -313,8 +322,69 @@ export default function ProductCustomization() {
                 <FiShoppingCart className="h-6 w-6" />
               </Link>
 
+              <button
+                type="button"
+                aria-label={
+                  mobileMenuOpen
+                    ? 'Close navigation menu'
+                    : 'Open navigation menu'
+                }
+                aria-expanded={mobileMenuOpen}
+                onClick={() =>
+                  setMobileMenuOpen(
+                    (open) => !open,
+                  )
+                }
+                className="flex h-9 w-9 items-center justify-center md:hidden"
+              >
+                {mobileMenuOpen ? (
+                  <FiX className="h-6 w-6" />
+                ) : (
+                  <FiMenu className="h-6 w-6" />
+                )}
+              </button>
+
             </div>
           </nav>
+
+          {mobileMenuOpen && (
+            <div className="border-t border-[#dddddd] bg-white md:hidden">
+              <nav className="mx-auto flex w-full flex-col">
+
+                <Link
+                  to="/"
+                  onClick={() =>
+                    setMobileMenuOpen(false)
+                  }
+                  className="border-b border-[#eeeeee] px-5 py-4 text-[15px] transition hover:bg-[#f7f7f7] hover:text-[#ff5a00]"
+                >
+                  Home
+                </Link>
+
+                <Link
+                  to="/catalog"
+                  onClick={() =>
+                    setMobileMenuOpen(false)
+                  }
+                  className="border-b border-[#eeeeee] px-5 py-4 text-[15px] font-semibold text-[#ff5a00] transition hover:bg-[#f7f7f7]"
+                >
+                  Catalog
+                </Link>
+
+                <Link
+                  to="/my-orders"
+                  onClick={() =>
+                    setMobileMenuOpen(false)
+                  }
+                  className="px-5 py-4 text-[15px] transition hover:bg-[#f7f7f7] hover:text-[#ff5a00]"
+                >
+                  My Orders
+                </Link>
+
+              </nav>
+            </div>
+          )}
+
         </header>
 
         <div className="flex min-h-[70vh] items-center justify-center">
@@ -344,7 +414,9 @@ export default function ProductCustomization() {
       {/* =========================================
           NAVBAR
       ========================================== */}
+
       <header className="sticky top-0 z-50 border-b border-[#dddddd] bg-white">
+
         <nav className="mx-auto flex h-[86px] w-full items-center justify-between px-5 sm:px-8 lg:px-12">
 
           <Link
@@ -412,16 +484,79 @@ export default function ProductCustomization() {
               <FiShoppingCart className="h-6 w-6" />
             </Link>
 
+            <button
+              type="button"
+              aria-label={
+                mobileMenuOpen
+                  ? 'Close navigation menu'
+                  : 'Open navigation menu'
+              }
+              aria-expanded={mobileMenuOpen}
+              onClick={() =>
+                setMobileMenuOpen(
+                  (open) => !open,
+                )
+              }
+              className="flex h-9 w-9 items-center justify-center md:hidden"
+            >
+              {mobileMenuOpen ? (
+                <FiX className="h-6 w-6" />
+              ) : (
+                <FiMenu className="h-6 w-6" />
+              )}
+            </button>
+
           </div>
         </nav>
+
+        {mobileMenuOpen && (
+          <div className="border-t border-[#dddddd] bg-white md:hidden">
+            <nav className="mx-auto flex w-full flex-col">
+
+              <Link
+                to="/"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="border-b border-[#eeeeee] px-5 py-4 text-[15px] transition hover:bg-[#f7f7f7] hover:text-[#ff5a00]"
+              >
+                Home
+              </Link>
+
+              <Link
+                to="/catalog"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="border-b border-[#eeeeee] px-5 py-4 text-[15px] font-semibold text-[#ff5a00] transition hover:bg-[#f7f7f7]"
+              >
+                Catalog
+              </Link>
+
+              <Link
+                to="/my-orders"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="px-5 py-4 text-[15px] transition hover:bg-[#f7f7f7] hover:text-[#ff5a00]"
+              >
+                My Orders
+              </Link>
+
+            </nav>
+          </div>
+        )}
+
       </header>
 
       {/* =========================================
           MAIN PRODUCT CUSTOMIZATION AREA
       ========================================== */}
+
       <section className="mx-auto grid w-full max-w-[1450px] grid-cols-1 items-start gap-8 px-5 py-7 sm:px-8 lg:grid-cols-[minmax(0,1fr)_500px] lg:gap-7 lg:px-10 xl:grid-cols-[minmax(0,1fr)_500px] xl:px-12">
 
         {/* LEFT */}
+
         <div className="min-w-0">
 
           <Link
@@ -445,6 +580,7 @@ export default function ProductCustomization() {
           </div>
 
           {/* PRODUCT IMAGE */}
+
           <div className="mt-7 flex h-[580px] w-full items-center justify-center overflow-hidden bg-[#f7f7f7]">
 
             <img
@@ -457,6 +593,7 @@ export default function ProductCustomization() {
         </div>
 
         {/* RIGHT CUSTOMIZATION PANEL */}
+
         <aside className="w-full rounded-[10px] border border-[#d7d7d7] bg-white p-5 lg:p-5 xl:p-6">
 
           <h2 className="text-[23px] font-bold tracking-[-0.6px]">
@@ -464,6 +601,7 @@ export default function ProductCustomization() {
           </h2>
 
           {/* NAME */}
+
           <div className="mt-6">
 
             <div className="flex items-center justify-between text-[15px] font-medium">
@@ -492,6 +630,7 @@ export default function ProductCustomization() {
           </div>
 
           {/* COLOURS */}
+
           <div className="mt-5">
 
             <div className="flex items-center justify-between text-[15px] font-medium">
@@ -509,7 +648,9 @@ export default function ProductCustomization() {
                 <ColorOption
                   key={color.id}
                   color={color}
-                  selected={selectedColor === color.id}
+                  selected={
+                    selectedColor === color.id
+                  }
                   onClick={() =>
                     setSelectedColor(color.id)
                   }
@@ -520,6 +661,7 @@ export default function ProductCustomization() {
           </div>
 
           {/* PATTERNS */}
+
           <div className="mt-4">
 
             <div className="flex items-center justify-between text-[15px] font-medium">
@@ -546,6 +688,7 @@ export default function ProductCustomization() {
           </div>
 
           {/* GRAPHICS */}
+
           <div className="mt-4">
 
             <div className="flex items-center justify-between text-[15px] font-medium">
@@ -572,6 +715,7 @@ export default function ProductCustomization() {
           </div>
 
           {/* PRICE BREAKDOWN */}
+
           <div className="mt-4 border-t border-[#dedede] pt-3">
 
             <div className="space-y-[3px] text-[14px]">
@@ -621,6 +765,7 @@ export default function ProductCustomization() {
           </div>
 
           {/* TOTAL + BUTTON */}
+
           <div className="mt-4 border-t border-[#dedede] pt-3">
 
             <div className="flex items-center justify-between">

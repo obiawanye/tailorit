@@ -6,6 +6,8 @@ import {
   FiTrash2,
   FiMinus,
   FiPlus,
+  FiMenu,
+  FiX,
 } from 'react-icons/fi'
 import ProfileMenu from '../components/ProfileMenu'
 
@@ -44,10 +46,10 @@ const formatPrice = (price) =>
 /*
  TEMPORARY CART STORAGE
 
-| For now the cart uses localStorage.
+ | For now the cart uses localStorage.
 
-| Later:
-| localStorage → Firestore
+ | Later:
+ | localStorage → Firestore
 */
 
 const getSavedCart = () => {
@@ -79,6 +81,7 @@ export default function Cart() {
 
   const [promoCode, setPromoCode] = useState('')
   const [promoMessage, setPromoMessage] = useState('')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   /*  CART  */
 
@@ -288,7 +291,7 @@ export default function Cart() {
             />
           </Link>
 
-          <div className="flex items-center gap-3 text-[13px] sm:gap-6 sm:text-[15px] lg:gap-10 lg:text-[16px]">
+          <div className="hidden items-center gap-3 text-[13px] sm:gap-6 sm:text-[15px] md:flex lg:gap-10 lg:text-[16px]">
             <Link
               to="/"
               className="transition hover:text-[#ff5a00]"
@@ -335,8 +338,75 @@ export default function Cart() {
                 </span>
               )}
             </Link>
+
+            <button
+              type="button"
+              aria-label={
+                mobileMenuOpen
+                  ? 'Close menu'
+                  : 'Open menu'
+              }
+              onClick={() =>
+                setMobileMenuOpen(
+                  (current) => !current,
+                )
+              }
+              className="flex h-9 w-9 items-center justify-center md:hidden"
+            >
+              {mobileMenuOpen ? (
+                <FiX className="h-6 w-6" />
+              ) : (
+                <FiMenu className="h-6 w-6" />
+              )}
+            </button>
           </div>
         </nav>
+
+        {mobileMenuOpen && (
+          <div className="border-t border-[#dddddd] bg-white md:hidden">
+            <nav className="mx-auto flex w-full flex-col">
+              <Link
+                to="/"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="border-b border-[#eeeeee] px-5 py-4 text-[15px] transition hover:bg-[#f7f7f7] hover:text-[#ff5a00]"
+              >
+                Home
+              </Link>
+
+              <Link
+                to="/catalog"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="border-b border-[#eeeeee] px-5 py-4 text-[15px] transition hover:bg-[#f7f7f7] hover:text-[#ff5a00]"
+              >
+                Catalog
+              </Link>
+
+              <Link
+                to="/my-orders"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="border-b border-[#eeeeee] px-5 py-4 text-[15px] transition hover:bg-[#f7f7f7] hover:text-[#ff5a00]"
+              >
+                My Orders
+              </Link>
+
+              <Link
+                to="/cart"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="px-5 py-4 text-[15px] font-semibold text-[#ff5a00] transition hover:bg-[#f7f7f7]"
+              >
+                Cart
+              </Link>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* CONTENT */}
